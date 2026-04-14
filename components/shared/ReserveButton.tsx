@@ -1,27 +1,32 @@
 "use client";
 
 import React, { useTransition } from "react";
-import { useToast } from "@/components/shared/ToastProvider";
+import { useToast } from "@/hooks/useToast";
 import { cn } from "@/lib/utils";
 
 interface ReserveButtonProps {
   action: (formData: FormData) => void;
   disabled: boolean;
   fullWidth?: boolean;
+  hasReserved?: boolean;
 }
 
-export function ReserveButton({ action, disabled, fullWidth = false }: ReserveButtonProps) {
+export function ReserveButton({ action, disabled, fullWidth = false, hasReserved = false }: ReserveButtonProps) {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
 
   const handleSubmit = (formData: FormData) => {
-    if (disabled) return;
+    if (disabled || hasReserved) return;
     toast("Reserving item...", "pending");
 
     startTransition(async () => {
       try {
-        await action(formData);
-        toast("Item reserved! Check your reservations for the pickup code.", "success");
+        const result = await action(formData) as { error?: string } | undefined;
+        if (result?.error) {
+          toast(result.error, "error");
+        } else {
+          toast("Item reserved! Check your reservations for the pickup code.", "success");
+        }
       } catch {
         toast("Failed to reserve. Item may be out of stock.", "error");
       }
@@ -32,7 +37,7 @@ export function ReserveButton({ action, disabled, fullWidth = false }: ReserveBu
     <form action={handleSubmit} className={cn(fullWidth && "w-full")}>
       <button
         type="submit"
-        disabled={disabled || isPending}
+        disabled={disabled || hasReserved || isPending}
         className={cn(
           "text-xs font-medium uppercase transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed",
           fullWidth
@@ -40,7 +45,7 @@ export function ReserveButton({ action, disabled, fullWidth = false }: ReserveBu
             : "py-2 px-0 tracking-widest text-[#1C1C1E] border-b border-transparent group-hover:border-[#1C1C1E]"
         )}
       >
-        {isPending ? "Reserving..." : disabled ? "Out of Stock" : fullWidth ? "Reserve Now" : "Reserve"}
+        {isPending ? "Reserving..." : hasReserved ? "Reserved" : disabled ? "Out of Stock" : fullWidth ? "Reserve Now" : "Reserve"}
       </button>
     </form>
   );

@@ -1,5 +1,11 @@
 import { cache } from 'react';
 import { query } from '../db';
+import { getJsonCache, setJsonCache, deleteCacheKey } from '../redisCache';
+import {
+  CACHE_KEYS,
+  CACHE_TTL,
+  invalidateStoreStatsCaches,
+} from '../cacheInvalidation';
 
 export interface Store {
   id: string;
@@ -27,11 +33,23 @@ export interface StoreStats {
   totalReserved: number;
 }
 
+type CachedStore = Omit<Store, "createdAt"> & { createdAt: string };
+
 /**
  * findStoreByMerchantId
  * Cached per-render lookup of a merchant's store.
  */
 export const findStoreByMerchantId = cache(async (merchantId: string): Promise<Store | null> => {
+  const cacheKey = `${CACHE_KEYS.STORE_BY_MERCHANT_PREFIX}${merchantId}`;
+  const cachedStore = await getJsonCache<CachedStore>(cacheKey);
+
+  if (cachedStore) {
+    return {
+      ...cachedStore,
+      createdAt: new Date(cachedStore.createdAt),
+    };
+  }
+
   const res = await query(
     'SELECT id, merchant_id, name, iligan_barangay_location, latitude, longitude, aesthetic_cover_image_url, created_at FROM stores WHERE merchant_id = $1',
     [merchantId]
@@ -40,7 +58,7 @@ export const findStoreByMerchantId = cache(async (merchantId: string): Promise<S
   if (res.rows.length === 0) return null;
 
   const row = res.rows[0];
-  return {
+  const store: Store = {
     id: row.id,
     merchantId: row.merchant_id,
     name: row.name,
@@ -50,6 +68,17 @@ export const findStoreByMerchantId = cache(async (merchantId: string): Promise<S
     coverImageUrl: row.aesthetic_cover_image_url,
     createdAt: new Date(row.created_at),
   };
+
+  await setJsonCache<CachedStore>(
+    cacheKey,
+    {
+      ...store,
+      createdAt: store.createdAt.toISOString(),
+    },
+    CACHE_TTL.STORE_BY_MERCHANT
+  );
+
+  return store;
 });
 
 /**
@@ -67,7 +96,7 @@ export async function createStore(data: CreateStoreData): Promise<Store | null> 
   if (res.rows.length === 0) return null;
 
   const row = res.rows[0];
-  return {
+  const store: Store = {
     id: row.id,
     merchantId: row.merchant_id,
     name: row.name,
@@ -77,13 +106,28 @@ export async function createStore(data: CreateStoreData): Promise<Store | null> 
     coverImageUrl: row.aesthetic_cover_image_url,
     createdAt: new Date(row.created_at),
   };
+
+  await setJsonCache<CachedStore>(
+    `${CACHE_KEYS.STORE_BY_MERCHANT_PREFIX}${store.merchantId}`,
+    {
+      ...store,
+      createdAt: store.createdAt.toISOString(),
+    },
+    CACHE_TTL.STORE_BY_MERCHANT
+  );
+
+  return store;
 }
 
 /**
  * getStoreStats
- * Dashboard statistics for a merchant's store.
+ * Dashboard statistics for a merchant's store. Cached with 30s TTL.
  */
 export async function getStoreStats(storeId: string): Promise<StoreStats> {
+  const cacheKey = `${CACHE_KEYS.STORE_STATS_PREFIX}${storeId}`;
+  const cached = await getJsonCache<StoreStats>(cacheKey);
+  if (cached) return cached;
+
   const statsQuery = `
     SELECT
       (SELECT COUNT(*) FROM surplus_listings WHERE store_id = $1 AND quantity_available > 0) AS active_listings,
@@ -98,9 +142,39 @@ export async function getStoreStats(storeId: string): Promise<StoreStats> {
   const res = await query(statsQuery, [storeId]);
   const row = res.rows[0];
 
-  return {
+  const stats: StoreStats = {
     activeListings: parseInt(row.active_listings) || 0,
     pendingReservations: parseInt(row.pending_reservations) || 0,
     totalReserved: parseInt(row.total_reserved) || 0,
   };
+
+  await setJsonCache(cacheKey, stats, CACHE_TTL.STORE_STATS);
+  return stats;
+}
+
+/**
+ * updateStoreCoordinates
+ * Updates the latitude and longitude for a merchant's store.
+ * Invalidates the store cache to ensure fresh data.
+ */
+export async function updateStoreCoordinates(
+  merchantId: string,
+  latitude: number,
+  longitude: number
+): Promise<boolean> {
+  const res = await query(
+    `UPDATE stores 
+     SET latitude = $2, longitude = $3
+     WHERE merchant_id = $1 
+     RETURNING id`,
+    [merchantId, latitude, longitude]
+  );
+
+  if (res.rows.length > 0) {
+    // Invalidate store cache
+    await deleteCacheKey(`${CACHE_KEYS.STORE_BY_MERCHANT_PREFIX}${merchantId}`);
+    return true;
+  }
+
+  return false;
 }

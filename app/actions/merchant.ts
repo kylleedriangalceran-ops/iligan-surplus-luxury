@@ -89,12 +89,22 @@ export async function createSurplusDrop(formData: FormData) {
       return { error: "Failed to create listing." };
     }
 
-    await createNotification(
-      null,
-      `New Drop: ${store.name} listed ${title} for ₱${reservedPrice.toFixed(2)}!`,
-      "NEW_DROP",
-      "/feed"
-    );
+    // Targeted notification blast to active followers 
+    const { getStoreFollowers } = await import("@/lib/repositories/followRepository");
+    const followers = await getStoreFollowers(store.id);
+
+    if (followers.length > 0) {
+      const messages = followers.map((follower) => 
+        createNotification(
+          follower.user_id,
+          `New Drop: ${store.name} listed ${title} for ₱${reservedPrice.toFixed(2)}!`,
+          "NEW_DROP",
+          "/feed"
+        )
+      );
+      // Wait for all pushes to settle
+      await Promise.allSettled(messages);
+    }
 
     revalidatePath("/dashboard");
     revalidatePath("/feed");
@@ -123,4 +133,91 @@ export async function updateReservationStatusAction(
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/reservations");
   return { success: true };
+}
+
+export async function verifyPickup(reservationId: string) {
+  const session = await auth();
+  if (!session?.user?.id || (session.user.role !== "MERCHANT" && session.user.role !== "ADMIN")) {
+    return { error: "Unauthorized access. Merchant Privileges Required." };
+  }
+
+  // Find store by current merchant to prove authorization
+  const store = await findStoreByMerchantId(session.user.id);
+  if (!store && session.user.role !== "ADMIN") {
+      return { error: "You must have an active store to verify pickups." };
+  }
+
+  // Cross-reference reservation's listing to merchant's store
+  // To avoid massive dependency injection loop, we just use a direct query.
+  // We can import query directly if necessary, or get it from reservationRepository.
+  // Actually, reservationRepository.ts has updateReservationStatus which does not verify caller.
+  // We should do a direct query to ensure it belongs to storeId.
+  const { query } = await import("@/lib/db");
+  
+  try {
+    const res = await query(
+      `SELECT r.id, r.status, sl.store_id, sl.title
+       FROM reservations r
+       JOIN surplus_listings sl ON r.listing_id = sl.id
+       WHERE r.id = $1`,
+      [reservationId]
+    );
+
+    if (res.rows.length === 0) {
+      return { error: "Invalid QR Code: Reservation not found." };
+    }
+
+    const { status, store_id, title } = res.rows[0];
+
+    if (session.user.role !== "ADMIN" && store_id !== store?.id) {
+       return { error: "Access Denied: This reservation belongs to a different store." };
+    }
+
+    if (status === "CLAIMED") {
+      return { error: "This QR Code has already been scanned and claimed." };
+    }
+    
+    if (status === "CANCELLED") {
+      return { error: "This reservation was cancelled." };
+    }
+
+    // Now update using the repository method to handle cache invalidation
+    const success = await updateReservationStatus(reservationId, "CLAIMED");
+    if (!success) {
+      return { error: "Database error during status update." };
+    }
+
+    revalidatePath("/dashboard");
+    revalidatePath("/feed");
+    return { success: true, message: `Successfully verified pickup for: ${title}` };
+  } catch (err) {
+    console.error("verifyPickup Error:", err);
+    return { error: "A server error occurred while verifying the pass." };
+  }
+}
+
+// ─── Store Location ─────────────────────────────────────────
+export async function updateStoreLocation(latitude: number, longitude: number) {
+  const session = await auth();
+  if (!session?.user?.id || session.user.role !== "MERCHANT") {
+    return { error: "Unauthorized: Only merchants can update store location" };
+  }
+
+  const { updateStoreCoordinates } = await import("@/lib/repositories/storeRepository");
+  
+  try {
+    const updated = await updateStoreCoordinates(session.user.id, latitude, longitude);
+    if (!updated) {
+      return { error: "No store found for this merchant. Please create your store first." };
+    }
+    
+    revalidatePath("/dashboard");
+    revalidatePath("/map");
+    revalidatePath("/feed");
+    
+    return { success: true };
+  } catch (error) {
+    console.error("updateStoreLocation error:", error);
+    return { error: "Failed to update store location" };
+  }
 }

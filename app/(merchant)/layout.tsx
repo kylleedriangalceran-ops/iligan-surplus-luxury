@@ -16,7 +16,6 @@ export default async function MerchantLayout({
 
   return (
     <div className="flex-1 px-6 lg:px-16 py-12">
-      <Breadcrumbs />
       {children}
     </div>
   );

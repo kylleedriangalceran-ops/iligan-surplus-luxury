@@ -16,7 +16,7 @@ export function AnimatedButton({
   className,
   ...props
 }: AnimatedButtonProps) {
-  const baseStyles = "relative overflow-hidden flex items-center justify-center font-medium tracking-wide transition-colors duration-500 ease-out py-3 px-8 text-sm uppercase";
+  const baseStyles = "relative overflow-hidden flex items-center justify-center font-medium tracking-wide transition-colors duration-500 ease-out py-3 px-8 text-sm uppercase rounded-md";
   
   const variants = {
     primary: "bg-foreground text-background border border-foreground hover:text-background",

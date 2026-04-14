@@ -2,11 +2,14 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { query } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+const noStoreHeaders = { "Cache-Control": "no-store" };
+
 export async function GET() {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ unreadCount: 0 }, { status: 401 });
+      return NextResponse.json({ unreadCount: 0 }, { status: 401, headers: noStoreHeaders });
     }
 
     const { id, role } = session.user;
@@ -34,9 +37,9 @@ export async function GET() {
       unreadCount = parseInt(res.rows[0]?.count || "0", 10);
     }
 
-    return NextResponse.json({ unreadCount });
+    return NextResponse.json({ unreadCount }, { headers: noStoreHeaders });
   } catch (error) {
     console.error("Error fetching notifications:", error);
-    return NextResponse.json({ unreadCount: 0 }, { status: 500 });
+    return NextResponse.json({ unreadCount: 0 }, { status: 500, headers: noStoreHeaders });
   }
 }

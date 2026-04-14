@@ -1,43 +1,38 @@
-"use client";
-
 import React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
-export function Breadcrumbs() {
-  const pathname = usePathname();
-  
-  if (pathname === "/" || pathname === "/feed") return null;
+interface BreadcrumbItem {
+  label: string;
+  href?: string;
+}
 
-  const segments = pathname.split("/").filter(Boolean);
+interface BreadcrumbsProps {
+  items: BreadcrumbItem[];
+  className?: string;
+}
+
+export function Breadcrumbs({ items, className }: BreadcrumbsProps) {
+  if (!items || items.length === 0) return null;
 
   return (
-    <nav className="flex items-center space-x-2 text-xs uppercase tracking-widest text-[#1C1C1E]/40 mb-8 pt-4">
-      <Link href="/" className="hover:text-[#1C1C1E] transition-colors">
-        Home
-      </Link>
-      
-      {segments.map((segment, index) => {
-        const url = `/${segments.slice(0, index + 1).join("/")}`;
-        const isLast = index === segments.length - 1;
+    <nav className={cn("flex items-center gap-2 text-[10px] md:text-[11px] uppercase tracking-widest font-semibold text-[#1C1C1E]/40", className)}>
+      {items.map((item, index) => {
+        const isLast = index === items.length - 1;
         
         return (
-          <React.Fragment key={url}>
-            <span className="text-[#1C1C1E]/20">/</span>
-            {isLast ? (
-              <motion.span
-                initial={{ opacity: 0, x: -5 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="text-[#1C1C1E] font-medium"
-              >
-                {segment.replace("-", " ")}
-              </motion.span>
-            ) : (
-              <Link href={url} className="hover:text-[#1C1C1E] transition-colors">
-                {segment.replace("-", " ")}
+          <React.Fragment key={index}>
+            {item.href && !isLast ? (
+              <Link href={item.href} className="hover:text-[#1C1C1E] transition-colors cursor-pointer">
+                {item.label}
               </Link>
+            ) : (
+              <span className={cn(isLast ? "text-[#D4AF37]" : "")}>
+                {item.label}
+              </span>
             )}
+            
+            {!isLast && <span className="mx-1.5 opacity-50">/</span>}
           </React.Fragment>
         );
       })}

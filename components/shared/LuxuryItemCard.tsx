@@ -6,10 +6,12 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { ReserveButton } from "./ReserveButton";
 import { DropDetailModal } from "./DropDetailModal";
+import { FollowStoreButton } from "./FollowStoreButton";
 
 interface LuxuryItemCardProps {
   title: string;
   merchant: string;
+  storeId: string;
   originalPrice: number;
   surplusPrice: number;
   imageUrl?: string | null;
@@ -17,11 +19,13 @@ interface LuxuryItemCardProps {
   className?: string;
   action?: (formData: FormData) => void;
   index?: number;
+  hasReserved?: boolean;
 }
 
 export function LuxuryItemCard({
   title,
   merchant,
+  storeId,
   originalPrice,
   surplusPrice,
   imageUrl,
@@ -29,8 +33,10 @@ export function LuxuryItemCard({
   className,
   action,
   index = 0,
+  hasReserved = false,
 }: LuxuryItemCardProps) {
   const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const isSoldOut = availableCount <= 0;
 
   return (
     <motion.div
@@ -48,7 +54,7 @@ export function LuxuryItemCard({
       <button 
         type="button" 
         onClick={() => setIsModalOpen(true)}
-        className="relative aspect-[4/5] w-full overflow-hidden bg-[#1C1C1E]/5 text-left border-b border-[#1C1C1E]/5 focus:outline-none"
+        className="relative aspect-4/5 w-full overflow-hidden bg-[#1C1C1E]/5 text-left border-b border-[#1C1C1E]/5 focus:outline-none"
       >
         {imageUrl ? (
           <Image
@@ -59,7 +65,7 @@ export function LuxuryItemCard({
             className="object-cover transition-transform duration-1000 ease-out group-hover:scale-105"
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-[#1C1C1E]/[0.03]">
+          <div className="absolute inset-0 flex items-center justify-center bg-[#1C1C1E]/3">
             <span className="text-[#1C1C1E]/30 text-xs uppercase tracking-widest font-light">
               No Image
             </span>
@@ -68,10 +74,27 @@ export function LuxuryItemCard({
         
         {/* Availability Badge */}
         <div className="absolute top-4 left-4 z-10">
-          <div className="bg-[#FAF9F6]/80 backdrop-blur-md px-3 py-1 text-[10px] uppercase tracking-wider text-[#1C1C1E] border border-[#1C1C1E]/10">
-            {availableCount} Available
-          </div>
+          {isSoldOut ? (
+            <div className="bg-white/60 backdrop-blur-md px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-[#1C1C1E] border border-[#1C1C1E]/15">
+              Sold Out
+            </div>
+          ) : (
+            <div className="bg-[#FAF9F6]/80 backdrop-blur-md px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-[#1C1C1E] border border-[#1C1C1E]/10">
+              {availableCount} Available
+            </div>
+          )}
         </div>
+
+        {/* Sold out frosted glass overlay (FOMO) */}
+        {isSoldOut && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center">
+            <div className="px-6 py-3 rounded-2xl border border-white/40 bg-white/35 backdrop-blur-xl shadow-[0_18px_55px_rgba(28,28,30,0.18)]">
+              <span className="text-xs font-semibold uppercase tracking-[0.32em] text-[#1C1C1E]">
+                Sold Out
+              </span>
+            </div>
+          </div>
+        )}
       </button>
 
       {/* Content wrapper */}
@@ -89,7 +112,8 @@ export function LuxuryItemCard({
               <p className="text-[10px] text-[#1C1C1E]/60 uppercase tracking-widest font-medium">
                 {merchant}
               </p>
-              <div className="flex items-center gap-0.5 text-[10px]">
+              <FollowStoreButton storeId={storeId} />
+              <div className="flex items-center gap-0.5 text-[10px] ml-auto">
                 <span className="text-[#1C1C1E]">★</span>
                 <span className="font-semibold text-[#1C1C1E]">4.8</span>
               </div>
@@ -108,13 +132,13 @@ export function LuxuryItemCard({
           </div>
           
           {action ? (
-            <ReserveButton action={action} disabled={availableCount <= 0} />
+            <ReserveButton action={action} disabled={availableCount <= 0} hasReserved={hasReserved} />
           ) : (
             <button 
-              disabled={availableCount <= 0}
+              disabled={availableCount <= 0 || hasReserved}
               className="text-xs font-medium uppercase tracking-widest py-2 px-0 text-[#1C1C1E] border-b border-transparent transition-all duration-300 group-hover:border-[#1C1C1E] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {availableCount <= 0 ? "Out of Stock" : "Reserve"}
+              {hasReserved ? "Reserved" : availableCount <= 0 ? "Out of Stock" : "Reserve"}
             </button>
           )}
         </div>
@@ -123,7 +147,7 @@ export function LuxuryItemCard({
       <DropDetailModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        item={{ title, merchant, originalPrice, surplusPrice, imageUrl, availableCount }}
+        item={{ title, merchant, merchantId: storeId, originalPrice, surplusPrice, imageUrl, availableCount, hasReserved }}
         action={action}
       />
     </motion.div>

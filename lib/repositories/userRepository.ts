@@ -1,6 +1,8 @@
 import { cache } from 'react';
 import bcrypt from 'bcryptjs';
 import { query } from '../db';
+import { getJsonCache, setJsonCache } from '../redisCache';
+import { CACHE_KEYS, CACHE_TTL, invalidateApplicationCaches } from '../cacheInvalidation';
 
 // Interface matching the NextAuth module declaration and pure DB representations
 export interface User {
@@ -21,12 +23,75 @@ export interface CreateUserData {
   role?: 'MERCHANT' | 'CUSTOMER' | 'ADMIN';
 }
 
+// Cached user type — excludes passwordHash for security
+type CachedUser = Omit<User, 'createdAt' | 'passwordHash'> & { createdAt: string };
+
 /**
  * findUserByEmail
  * Uses React's `cache()` to deduplicate identical requests within a single React render.
- * Highly useful if multiple components need the user's data on the same page.
+ * Also uses Redis/in-memory cache for cross-request caching.
+ *
+ * SECURITY NOTE: The cached version does NOT include passwordHash.
+ * Auth credential verification always hits PostgreSQL directly via `findUserByEmailForAuth`.
  */
 export const findUserByEmail = cache(async (email: string): Promise<User | null> => {
+  const cacheKey = `${CACHE_KEYS.USER_EMAIL_PREFIX}${email}`;
+
+  // Try cache first (no passwordHash in cache)
+  const cached = await getJsonCache<CachedUser>(cacheKey);
+  if (cached) {
+    return {
+      ...cached,
+      createdAt: new Date(cached.createdAt),
+      // passwordHash is intentionally undefined for cached reads
+    };
+  }
+
+  try {
+    const res = await query(
+      'SELECT id, email, name, phone, password_hash, role, created_at FROM users WHERE email = $1',
+      [email]
+    );
+    
+    if (res.rows.length === 0) return null;
+
+    const rawUser = res.rows[0];
+
+    const user: User = {
+      id: rawUser.id,
+      email: rawUser.email,
+      name: rawUser.name,
+      phone: rawUser.phone,
+      role: rawUser.role,
+      passwordHash: rawUser.password_hash,
+      createdAt: new Date(rawUser.created_at),
+    };
+
+    // Cache WITHOUT passwordHash
+    const toCache: CachedUser = {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      phone: user.phone,
+      role: user.role,
+      createdAt: user.createdAt.toISOString(),
+    };
+    await setJsonCache(cacheKey, toCache, CACHE_TTL.USER_SESSION);
+
+    return user;
+  } catch (error: unknown) {
+    console.error('findUserByEmail error (DB might be offline):', error);
+    const msg = error instanceof Error ? error.message : String(error);
+    throw new Error(`DB Error during lookup: ${msg}`);
+  }
+});
+
+/**
+ * findUserByEmailForAuth
+ * ALWAYS hits PostgreSQL directly — used exclusively for credential verification.
+ * Never cached because passwordHash must be fresh and present.
+ */
+export async function findUserByEmailForAuth(email: string): Promise<User | null> {
   try {
     const res = await query(
       'SELECT id, email, name, phone, password_hash, role, created_at FROM users WHERE email = $1',
@@ -47,11 +112,40 @@ export const findUserByEmail = cache(async (email: string): Promise<User | null>
       createdAt: new Date(rawUser.created_at),
     };
   } catch (error: unknown) {
-    console.error('findUserByEmail error (DB might be offline):', error);
+    console.error('findUserByEmailForAuth error:', error);
     const msg = error instanceof Error ? error.message : String(error);
-    throw new Error(`DB Error during lookup: ${msg}`);
+    throw new Error(`DB Error during auth lookup: ${msg}`);
   }
-});
+}
+
+/**
+ * getUserRoleById
+ * Fast, cached role lookup for the JWT callback.
+ * Called on every token refresh — optimized with a short-TTL cache
+ * so role changes (e.g., CUSTOMER → MERCHANT on approval) propagate
+ * within ~30 seconds without hammering the database.
+ */
+export async function getUserRoleById(
+  userId: string
+): Promise<'MERCHANT' | 'CUSTOMER' | 'ADMIN' | null> {
+  const cacheKey = `${CACHE_KEYS.USER_ROLE_PREFIX}${userId}`;
+
+  // Check cache first
+  const cached = await getJsonCache<string>(cacheKey);
+  if (cached) return cached as 'MERCHANT' | 'CUSTOMER' | 'ADMIN';
+
+  try {
+    const res = await query('SELECT role FROM users WHERE id = $1', [userId]);
+    if (res.rows.length === 0) return null;
+
+    const role = res.rows[0].role as 'MERCHANT' | 'CUSTOMER' | 'ADMIN';
+    await setJsonCache(cacheKey, role, CACHE_TTL.USER_ROLE);
+    return role;
+  } catch (error) {
+    console.error('getUserRoleById error:', error);
+    return null; // Graceful degradation — keep the existing JWT role
+  }
+}
 
 /**
  * createUser
@@ -103,9 +197,34 @@ export async function createMerchantApplication(
        RETURNING id`,
       [userId, storeName, address, socialMedia || null]
     );
-    return res.rows.length > 0;
+    if (res.rows.length > 0) {
+      await invalidateApplicationCaches();
+      return true;
+    }
+    return false;
   } catch (error: unknown) {
     console.error('Error creating merchant application:', error);
     return false;
+  }
+}
+
+/**
+ * getExistingApplication
+ * Check if a user already has a pending or approved merchant application.
+ */
+export async function getExistingApplication(
+  userId: string
+): Promise<{ id: string; status: string } | null> {
+  try {
+    const res = await query(
+      `SELECT id, status FROM merchant_applications 
+       WHERE user_id = $1 AND status IN ('PENDING', 'APPROVED')
+       ORDER BY created_at DESC LIMIT 1`,
+      [userId]
+    );
+    return res.rows.length > 0 ? { id: res.rows[0].id, status: res.rows[0].status } : null;
+  } catch (error: unknown) {
+    console.error('Error checking existing application:', error);
+    return null;
   }
 }

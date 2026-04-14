@@ -1,0 +1,146 @@
+﻿Γû▓ Next.js 16.2.2 (Turbopack)
+- Environments: .env
+
+  Creating an optimized production build ...
+node.exe : Turbopack build 
+encountered 3 warnings:
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~
+    + CategoryInfo          : 
+NotSp    ecified: (Turbopack 
+build encou    ntered 3 
+warnings::String) [],     
+RemoteException
+    + FullyQualifiedErrorId : 
+Nativ    eCommandError
+ 
+[next]/internal/font/google/geist
+_a71539c9.module.css
+Error while requesting resource
+There was an issue establishing 
+a connection while requesting htt
+ps://fonts.googleapis.com/css2?fa
+mily=Geist:wght@100..900&display=
+swap
+
+Import trace:
+  Server Component:
+    [next]/internal/font/google/g
+eist_a71539c9.module.css
+    [next]/internal/font/google/g
+eist_a71539c9.js
+    ./app/layout.tsx
+
+
+[next]/internal/font/google/geist
+_mono_8d43a2aa.module.css
+Error while requesting resource
+There was an issue establishing 
+a connection while requesting htt
+ps://fonts.googleapis.com/css2?fa
+mily=Geist+Mono:wght@100..900&dis
+play=swap
+
+Import trace:
+  Server Component:
+    [next]/internal/font/google/g
+eist_mono_8d43a2aa.module.css
+    [next]/internal/font/google/g
+eist_mono_8d43a2aa.js
+    ./app/layout.tsx
+
+
+[next]/internal/font/google/inter
+_b2991b2.module.css
+Error while requesting resource
+There was an issue establishing 
+a connection while requesting htt
+ps://fonts.googleapis.com/css2?fa
+mily=Inter:wght@100..900&display=
+swap
+
+Import trace:
+  Server Component:
+    [next]/internal/font/google/i
+nter_b2991b2.module.css
+    [next]/internal/font/google/i
+nter_b2991b2.js
+    ./app/layout.tsx
+
+
+
+> Build error occurred
+Error: Turbopack build failed 
+with 4 errors:
+./components/admin/AdminUserManag
+ement.tsx:270:1
+Expected '}', got '<eof>'
+  [90m268 |[0m   );
+  [90m269 |[0m }
+[31m[1m>[0m [90m270 |[0m
+  [90m    |[0m [31m[1m^[0m
+
+Parsing ecmascript source code 
+failed
+
+Import trace:
+  Server Component:
+    ./components/admin/AdminUserM
+anagement.tsx
+    ./app/(admin)/admin/page.tsx
+
+
+[next]/internal/font/google/geist
+_a71539c9.module.css
+next/font: error:
+Failed to fetch `Geist` from 
+Google Fonts.
+
+Import trace:
+  Server Component:
+    [next]/internal/font/google/g
+eist_a71539c9.module.css
+    [next]/internal/font/google/g
+eist_a71539c9.js
+    ./app/layout.tsx
+
+
+[next]/internal/font/google/geist
+_mono_8d43a2aa.module.css
+next/font: error:
+Failed to fetch `Geist Mono` 
+from Google Fonts.
+
+Import trace:
+  Server Component:
+    [next]/internal/font/google/g
+eist_mono_8d43a2aa.module.css
+    [next]/internal/font/google/g
+eist_mono_8d43a2aa.js
+    ./app/layout.tsx
+
+
+[next]/internal/font/google/inter
+_b2991b2.module.css
+next/font: error:
+Failed to fetch `Inter` from 
+Google Fonts.
+
+Import trace:
+  Server Component:
+    [next]/internal/font/google/i
+nter_b2991b2.module.css
+    [next]/internal/font/google/i
+nter_b2991b2.js
+    ./app/layout.tsx
+
+
+    at <unknown> (./components/ad
+min/AdminUserManagement.tsx:270:1
+)

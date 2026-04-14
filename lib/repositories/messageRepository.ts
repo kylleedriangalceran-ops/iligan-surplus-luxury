@@ -1,4 +1,6 @@
 import { query } from '../db';
+import { getJsonCache, setJsonCache } from '../redisCache';
+import { CACHE_KEYS, CACHE_TTL, invalidateMessageCaches } from '../cacheInvalidation';
 
 export interface ChatMessage {
   id: string;
@@ -7,6 +9,16 @@ export interface ChatMessage {
   content: string;
   createdAt: Date;
 }
+
+
+
+export interface RecentMessager {
+  userId: string;
+  name: string;
+  lastMessageAt: Date;
+}
+
+type CachedRecentMessager = Omit<RecentMessager, 'lastMessageAt'> & { lastMessageAt: string };
 
 export async function sendMessage(senderId: string, receiverId: string, content: string): Promise<ChatMessage | null> {
   const sql = `
@@ -20,6 +32,10 @@ export async function sendMessage(senderId: string, receiverId: string, content:
   if (res.rows.length === 0) return null;
 
   const row = res.rows[0];
+
+  // Invalidate recent messagers cache for both users
+  await invalidateMessageCaches(senderId, receiverId);
+
   return {
     id: row.id,
     senderId: row.sender_id,
@@ -29,6 +45,10 @@ export async function sendMessage(senderId: string, receiverId: string, content:
   };
 }
 
+/**
+ * getConversation
+ * Not cached — per-pair dataset changes too frequently for cache hits to be meaningful.
+ */
 export async function getConversation(user1Id: string, user2Id: string): Promise<ChatMessage[]> {
   const sql = `
     SELECT id, sender_id, receiver_id, content, created_at
@@ -49,7 +69,20 @@ export async function getConversation(user1Id: string, user2Id: string): Promise
   }));
 }
 
-export async function getRecentMessagers(userId: string): Promise<{ userId: string, name: string, lastMessageAt: Date }[]> {
+/**
+ * getRecentMessagers
+ * Cached sidebar list of recent conversation partners.
+ */
+export async function getRecentMessagers(userId: string): Promise<RecentMessager[]> {
+  const cacheKey = `${CACHE_KEYS.MESSAGES_RECENT_PREFIX}${userId}`;
+  const cached = await getJsonCache<CachedRecentMessager[]>(cacheKey);
+  if (cached) {
+    return cached.map((r) => ({
+      ...r,
+      lastMessageAt: new Date(r.lastMessageAt),
+    }));
+  }
+
   const sql = `
     SELECT DISTINCT ON (m.other_user_id)
       m.other_user_id as user_id,
@@ -69,9 +102,17 @@ export async function getRecentMessagers(userId: string): Promise<{ userId: stri
 
   const res = await query(sql, [userId]);
 
-  return res.rows.map(row => ({
+  const messagers: RecentMessager[] = res.rows.map(row => ({
     userId: row.user_id,
     name: row.name,
     lastMessageAt: new Date(row.last_message_at),
   })).sort((a, b) => b.lastMessageAt.getTime() - a.lastMessageAt.getTime());
+
+  const toCache: CachedRecentMessager[] = messagers.map((m) => ({
+    ...m,
+    lastMessageAt: m.lastMessageAt.toISOString(),
+  }));
+  await setJsonCache(cacheKey, toCache, CACHE_TTL.MESSAGES);
+
+  return messagers;
 }

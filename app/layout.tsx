@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "@/styles/globals.css";
+import "leaflet/dist/leaflet.css";
 import { cn } from "@/lib/utils";
 import { auth } from "@/lib/auth";
-import { Navbar } from "@/components/shared/Navbar";
-import { ToastProvider } from "@/components/shared/ToastProvider";
+import { Toaster } from "react-hot-toast";
 import { AppLayoutWrapper } from "@/components/shared/AppLayoutWrapper";
 import { AuthFeedback } from "@/components/shared/AuthFeedback";
 import { Suspense } from "react";
@@ -47,8 +47,8 @@ export default async function RootLayout({
   return (
     <html
       lang="en"
-      data-scroll-behavior="smooth"
       className={cn("h-full", "antialiased", geistSans.variable, geistMono.variable, "font-sans", inter.variable)}
+      style={{ scrollBehavior: 'smooth' }}
     >
       <body className="min-h-full flex flex-col noise-overlay">
         <NextTopLoader
@@ -63,15 +63,37 @@ export default async function RootLayout({
           shadow="0 0 10px #1C1C1E,0 0 5px #1C1C1E"
         />
         <SessionProvider session={session}>
-          <ToastProvider>
+            <Toaster
+              position="top-right"
+              toastOptions={{
+                duration: 4000,
+                style: {
+                  background: '#1C1C1E',
+                  color: '#FAF9F6',
+                  fontSize: '11px',
+                  fontWeight: 500,
+                  textTransform: 'uppercase' as const,
+                  letterSpacing: '0.12em',
+                  borderRadius: '4px',
+                  padding: '14px 18px',
+                  boxShadow: '0 8px 32px rgba(28,28,30,0.25)',
+                  border: '1px solid rgba(250,249,246,0.08)',
+                  maxWidth: '380px',
+                },
+                success: {
+                  iconTheme: { primary: '#D4AF37', secondary: '#1C1C1E' },
+                },
+                error: {
+                  iconTheme: { primary: '#FAF9F6', secondary: '#1C1C1E' },
+                },
+              }}
+            />
             <Suspense fallback={null}>
               <AuthFeedback />
             </Suspense>
-            <Navbar user={navUser} />
             <AppLayoutWrapper user={navUser}>
-              <main className="flex-1 pt-20 w-full">{children}</main>
+              {children}
             </AppLayoutWrapper>
-          </ToastProvider>
         </SessionProvider>
       </body>
     </html>

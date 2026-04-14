@@ -1,6 +1,12 @@
 import { cache } from 'react';
 import { unstable_cache, revalidateTag } from 'next/cache';
 import { query } from '../db';
+import { getJsonCache, setJsonCache } from '../redisCache';
+import {
+  CACHE_KEYS,
+  CACHE_TTL,
+  invalidateListingCaches,
+} from '../cacheInvalidation';
 
 export interface ActiveListing {
   id: string;
@@ -18,6 +24,8 @@ export interface ActiveListing {
   imageUrl: string | null;
   createdAt: Date;
 }
+
+type CachedActiveListing = Omit<ActiveListing, "createdAt"> & { createdAt: string };
 
 /**
  * Base data fetching function.
@@ -42,7 +50,8 @@ async function fetchActiveListingsFromDb(): Promise<ActiveListing[]> {
       s.merchant_id
     FROM surplus_listings sl
     JOIN stores s ON sl.store_id = s.id
-    WHERE sl.quantity_available > 0
+    WHERE sl.created_at >= NOW() - INTERVAL '24 hours'
+      AND sl.quantity_available >= 0
     ORDER BY sl.created_at DESC
   `;
   
@@ -65,20 +74,41 @@ async function fetchActiveListingsFromDb(): Promise<ActiveListing[]> {
   }));
 }
 
+function toCachedListings(listings: ActiveListing[]): CachedActiveListing[] {
+  return listings.map((listing) => ({
+    ...listing,
+    createdAt: listing.createdAt.toISOString(),
+  }));
+}
+
+function fromCachedListings(cached: CachedActiveListing[]): ActiveListing[] {
+  return cached.map((listing) => ({
+    ...listing,
+    createdAt: new Date(listing.createdAt),
+  }));
+}
+
 /**
  * getActiveListings
- * 1. \`unstable_cache\` provides high-performance Edge caching until invalidated via tags.
- * 2. \`cache()\` prevents redundant SQL calls within the exact same React render lifecycle.
+ * 1. `unstable_cache` provides high-performance Edge caching until invalidated via tags.
+ * 2. `cache()` prevents redundant SQL calls within the exact same React render lifecycle.
  */
 export const getActiveListings = cache(
   unstable_cache(
     async () => {
-      return fetchActiveListingsFromDb();
+      const cachedListings = await getJsonCache<CachedActiveListing[]>(CACHE_KEYS.ACTIVE_LISTINGS);
+      if (cachedListings !== null) {
+        return fromCachedListings(cachedListings);
+      }
+
+      const listings = await fetchActiveListingsFromDb();
+      await setJsonCache(CACHE_KEYS.ACTIVE_LISTINGS, toCachedListings(listings), CACHE_TTL.ACTIVE_LISTINGS);
+      return listings;
     },
     ['surplus-active-listings'], // Key identifier for caching mechanism mapping
     {
       tags: ['active-listings'], // Cache tags allowing on-demand Next.js invalidate triggers
-      revalidate: 60 * 5, // Optional: auto-revalidate every 5 minutes even without manual triggers
+      revalidate: 60, // ISR-style revalidation window for listing freshness
     }
   )
 );
@@ -91,8 +121,7 @@ export const getActiveListings = cache(
 export async function decrementQuantity(listingId: string): Promise<boolean> {
   const sql = `
     UPDATE surplus_listings 
-    SET quantity_available = quantity_available - 1, 
-        updated_at = CURRENT_TIMESTAMP
+    SET quantity_available = quantity_available - 1
     WHERE id = $1 AND quantity_available > 0
     RETURNING id, quantity_available
   `;
@@ -100,9 +129,9 @@ export async function decrementQuantity(listingId: string): Promise<boolean> {
   const res = await query(sql, [listingId]);
 
   if (res.rows.length > 0) {
-    // If successfully updated the DB, invalidate the front-end cache immediately
-    // Using parameter 'max' as recommended by Next 15 to trigger stale-while-revalidate semantics.
-    revalidateTag('active-listings', 'max');
+    // @ts-expect-error - Next.js natively crashes if a 2nd argument is provided here, despite generic TS typings
+    revalidateTag('active-listings');
+    await invalidateListingCaches();
     return true;
   }
 
@@ -182,8 +211,10 @@ export async function createListing(data: CreateListingData): Promise<ActiveList
 
   const row = res.rows[0];
 
-  // Invalidate the public feed cache
-  revalidateTag('active-listings', 'max');
+  // Invalidate public feed + admin caches
+  // @ts-expect-error - Next.js natively crashes if a 2nd argument is provided here
+  revalidateTag('active-listings');
+  await invalidateListingCaches();
 
   return {
     id: row.id,

@@ -2,7 +2,7 @@
 
 import React, { useTransition } from "react";
 import { updateReservationStatusAction } from "@/app/actions/merchant";
-import { useToast } from "@/components/shared/ToastProvider";
+import { useToast } from "@/hooks/useToast";
 
 export function ReservationActions({ reservationId }: { reservationId: string }) {
   const [isPending, startTransition] = useTransition();
@@ -27,14 +27,14 @@ export function ReservationActions({ reservationId }: { reservationId: string })
       <button
         onClick={() => handleAction("CLAIMED")}
         disabled={isPending}
-        className="text-[10px] uppercase tracking-widest font-medium px-3 py-1.5 bg-foreground text-background hover:bg-foreground/90 transition-colors disabled:opacity-50 cursor-pointer"
+        className="text-[10px] uppercase tracking-widest font-medium px-3 py-1.5 bg-foreground text-background rounded-md hover:bg-foreground/90 transition-colors disabled:opacity-50 cursor-pointer"
       >
         {isPending ? "..." : "Claim"}
       </button>
       <button
         onClick={() => handleAction("CANCELLED")}
         disabled={isPending}
-        className="text-[10px] uppercase tracking-widest font-medium px-3 py-1.5 border border-border hover:border-foreground transition-colors disabled:opacity-50 cursor-pointer"
+        className="text-[10px] uppercase tracking-widest font-medium px-3 py-1.5 border border-border rounded-md hover:border-foreground transition-colors disabled:opacity-50 cursor-pointer"
       >
         {isPending ? "..." : "Cancel"}
       </button>

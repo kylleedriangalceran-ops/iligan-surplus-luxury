@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useSearchParams, usePathname } from "next/navigation";
-import { useToast } from "./ToastProvider";
+import { useToast } from "@/hooks/useToast";
 
 /**
  * Detects login/logout via URL search params and shows appropriate toast.

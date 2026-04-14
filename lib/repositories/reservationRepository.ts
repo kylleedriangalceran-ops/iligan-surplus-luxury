@@ -1,4 +1,10 @@
 import { query } from '../db';
+import { getJsonCache, setJsonCache } from '../redisCache';
+import {
+  CACHE_KEYS,
+  CACHE_TTL,
+  invalidateReservationCaches,
+} from '../cacheInvalidation';
 
 export interface Reservation {
   id: string;
@@ -17,6 +23,34 @@ export interface ReservationWithDetails extends Reservation {
   reservedPrice: number;
 }
 
+// ─── Cached row types ──────────────────────────────────────
+type CachedReservationWithDetails = Omit<ReservationWithDetails, 'createdAt' | 'updatedAt'> & {
+  createdAt: string;
+  updatedAt: string;
+};
+
+type CachedStoreReservation = CachedReservationWithDetails & {
+  customerName: string;
+  customerEmail: string;
+};
+
+function rehydrateReservation(row: CachedReservationWithDetails): ReservationWithDetails {
+  return {
+    ...row,
+    createdAt: new Date(row.createdAt),
+    updatedAt: new Date(row.updatedAt),
+  };
+}
+
+function rehydrateStoreReservation(row: CachedStoreReservation): ReservationWithDetails & { customerName: string; customerEmail: string } {
+  return {
+    ...row,
+    createdAt: new Date(row.createdAt),
+    updatedAt: new Date(row.updatedAt),
+  };
+}
+
+// ─── Create ────────────────────────────────────────────────
 export async function createReservation(
   customerId: string,
   listingId: string,
@@ -30,10 +64,17 @@ export async function createReservation(
 
   try {
     const res = await query(sql, [customerId, listingId, token]);
-    
+
     if (res.rows.length === 0) return null;
 
     const row = res.rows[0];
+
+    // Find the store_id for this listing so we can invalidate store-level caches
+    const storeRes = await query(`SELECT store_id FROM surplus_listings WHERE id = $1`, [listingId]);
+    const storeId = storeRes.rows[0]?.store_id;
+
+    await invalidateReservationCaches(customerId, storeId);
+
     return {
       id: row.id,
       customerId: row.customer_id,
@@ -51,9 +92,13 @@ export async function createReservation(
 
 /**
  * getReservationsByCustomerId
- * Returns all reservations for a customer with listing & store details.
+ * Cached per-customer reservation list.
  */
 export async function getReservationsByCustomerId(customerId: string): Promise<ReservationWithDetails[]> {
+  const cacheKey = `${CACHE_KEYS.RESERVATIONS_CUSTOMER_PREFIX}${customerId}`;
+  const cached = await getJsonCache<CachedReservationWithDetails[]>(cacheKey);
+  if (cached) return cached.map(rehydrateReservation);
+
   const sql = `
     SELECT 
       r.id, r.customer_id, r.listing_id, r.status, r.reservation_token, r.created_at, r.updated_at,
@@ -68,7 +113,7 @@ export async function getReservationsByCustomerId(customerId: string): Promise<R
 
   const res = await query(sql, [customerId]);
 
-  return res.rows.map((row) => ({
+  const reservations: ReservationWithDetails[] = res.rows.map((row) => ({
     id: row.id,
     customerId: row.customer_id,
     listingId: row.listing_id,
@@ -81,13 +126,26 @@ export async function getReservationsByCustomerId(customerId: string): Promise<R
     pickupTimeWindow: row.pickup_time_window,
     reservedPrice: parseFloat(row.reserved_price),
   }));
+
+  const toCache: CachedReservationWithDetails[] = reservations.map((r) => ({
+    ...r,
+    createdAt: r.createdAt.toISOString(),
+    updatedAt: r.updatedAt.toISOString(),
+  }));
+  await setJsonCache(cacheKey, toCache, CACHE_TTL.RESERVATIONS);
+
+  return reservations;
 }
 
 /**
  * getReservationsByStoreId
- * Returns all reservations for a merchant's store with customer & listing details.
+ * Cached per-store reservation list with customer details.
  */
 export async function getReservationsByStoreId(storeId: string): Promise<(ReservationWithDetails & { customerName: string; customerEmail: string })[]> {
+  const cacheKey = `${CACHE_KEYS.RESERVATIONS_STORE_PREFIX}${storeId}`;
+  const cached = await getJsonCache<CachedStoreReservation[]>(cacheKey);
+  if (cached) return cached.map(rehydrateStoreReservation);
+
   const sql = `
     SELECT 
       r.id, r.customer_id, r.listing_id, r.status, r.reservation_token, r.created_at, r.updated_at,
@@ -104,7 +162,7 @@ export async function getReservationsByStoreId(storeId: string): Promise<(Reserv
 
   const res = await query(sql, [storeId]);
 
-  return res.rows.map((row) => ({
+  const reservations = res.rows.map((row) => ({
     id: row.id,
     customerId: row.customer_id,
     listingId: row.listing_id,
@@ -119,11 +177,20 @@ export async function getReservationsByStoreId(storeId: string): Promise<(Reserv
     customerName: row.customer_name,
     customerEmail: row.customer_email,
   }));
+
+  const toCache: CachedStoreReservation[] = reservations.map((r) => ({
+    ...r,
+    createdAt: r.createdAt.toISOString(),
+    updatedAt: r.updatedAt.toISOString(),
+  }));
+  await setJsonCache(cacheKey, toCache, CACHE_TTL.RESERVATIONS);
+
+  return reservations;
 }
 
 /**
  * updateReservationStatus
- * Updates a reservation's status (CLAIMED or CANCELLED).
+ * Updates status and invalidates both customer and store caches.
  */
 export async function updateReservationStatus(
   reservationId: string,
@@ -133,9 +200,21 @@ export async function updateReservationStatus(
     UPDATE reservations 
     SET status = $2, updated_at = CURRENT_TIMESTAMP
     WHERE id = $1
-    RETURNING id
+    RETURNING id, customer_id, listing_id
   `;
 
   const res = await query(sql, [reservationId, status]);
-  return res.rows.length > 0;
+
+  if (res.rows.length > 0) {
+    const { customer_id, listing_id } = res.rows[0];
+
+    // Look up the store for cross-repository invalidation
+    const storeRes = await query(`SELECT store_id FROM surplus_listings WHERE id = $1`, [listing_id]);
+    const storeId = storeRes.rows[0]?.store_id;
+
+    await invalidateReservationCaches(customer_id, storeId);
+    return true;
+  }
+
+  return false;
 }

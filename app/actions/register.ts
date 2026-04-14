@@ -14,14 +14,8 @@ export async function registerUser(
     const email = formData.get("email") as string;
     const phone = formData.get("phone") as string;
     const passwordRaw = formData.get("password") as string;
-    const role = formData.get("role") as "CUSTOMER" | "MERCHANT";
-
     if (!name || !email || !passwordRaw) {
       return { error: "Please fill in all required fields." };
-    }
-
-    if (!role || (role !== "CUSTOMER" && role !== "MERCHANT")) {
-        return { error: "Invalid role selected." };
     }
 
     // Check if user already exists
@@ -30,34 +24,18 @@ export async function registerUser(
        return { error: "An account with this email already exists." };
     }
 
-    // Admin Vetting Flow: Merchants are Customers until approved.
-    const actualRole = role === "MERCHANT" ? "CUSTOMER" : role;
-
     // Attempt creation. The userRepository handles the bcrypt hashing.
+    // We enforce CUSTOMER role for all new signups natively here.
     const user = await createUser({
       name,
       email,
       phone,
       passwordRaw,
-      role: actualRole,
+      role: "CUSTOMER",
     });
 
     if (!user) {
       return { error: "Database error: Failed to insert user into PostgreSQL." };
-    }
-
-    // Log the Merchant Application to the DB
-    if (role === "MERCHANT") {
-      const storeName = formData.get("storeName") as string;
-      const address = formData.get("address") as string;
-      const socialMedia = formData.get("socialMedia") as string;
-      
-      if (!storeName || !address) {
-        return { error: "Please provide your Store Name and Address." };
-      }
-
-      const { createMerchantApplication } = await import("@/lib/repositories/userRepository");
-      await createMerchantApplication(user.id, storeName, address, socialMedia);
     }
 
   } catch (error) {

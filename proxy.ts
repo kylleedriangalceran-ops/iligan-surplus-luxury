@@ -11,6 +11,17 @@ export default auth((req) => {
 
   const isMerchantRoute = nextUrl.pathname.startsWith("/(merchant)") || nextUrl.pathname.startsWith("/dashboard");
   const isCustomerRoute = nextUrl.pathname.startsWith("/(customer)") || nextUrl.pathname.startsWith("/feed");
+  const isAdminRoute = nextUrl.pathname.startsWith("/admin");
+
+  // Protect Admin Route strictly
+  if (isAdminRoute) {
+    if (!isLoggedIn) {
+      return NextResponse.redirect(new URL("/login", nextUrl));
+    }
+    if (role !== "ADMIN") {
+      return NextResponse.redirect(new URL("/", nextUrl));
+    }
+  }
 
   // Protect paths requiring login
   if (isMerchantRoute || isCustomerRoute) {

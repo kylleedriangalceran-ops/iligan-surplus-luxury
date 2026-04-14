@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+const publicAssetCacheControl = "public, max-age=2592000, s-maxage=2592000, stale-while-revalidate=86400";
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
@@ -16,6 +18,19 @@ const nextConfig: NextConfig = {
         hostname: "*.uploadthing.com",
       },
     ],
+  },
+  async headers() {
+    return [
+      {
+        source: "/:path((?!_next/).*)\\.(svg|png|jpg|jpeg|gif|webp|avif|ico|woff|woff2|ttf|otf)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: publicAssetCacheControl,
+          },
+        ],
+      },
+    ];
   },
 };
 

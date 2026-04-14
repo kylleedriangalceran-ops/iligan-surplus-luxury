@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { useClickOutside } from "@/hooks/useClickOutside";
 
 interface UserDropdownProps {
   user: {
@@ -16,16 +17,7 @@ export function UserDropdown({ user, onLogout }: UserDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Auto-close on click outside
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  useClickOutside(dropdownRef, useCallback(() => setIsOpen(false), []));
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -73,6 +65,15 @@ export function UserDropdown({ user, onLogout }: UserDropdownProps) {
               >
                 Edit Profile
               </Link>
+              {user.role === "CUSTOMER" && (
+                <Link
+                  href="/become-a-merchant"
+                  onClick={() => setIsOpen(false)}
+                  className="block px-5 py-2.5 text-xs uppercase tracking-widest text-[#1C1C1E]/70 hover:text-[#1C1C1E] hover:bg-[#1C1C1E]/5 transition-colors"
+                >
+                  Become a Merchant
+                </Link>
+              )}
               <button
                 onClick={() => {
                   setIsOpen(false);

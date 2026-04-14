@@ -36,6 +36,7 @@ declare module "next-auth/jwt" {
 export const authConfig = {
   session: {
     strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   pages: {
     signIn: "/login",
@@ -78,12 +79,30 @@ export const authConfig = {
 
       return true; // Allow all other routes (home page, etc.)
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       // Upon signin, user object is available
       if (user) {
         token.id = user.id;
         token.role = user.role;
+        token.email = user.email;
       }
+      
+      // Refresh role from database on every request (for role changes)
+      // This ensures merchants see their new role immediately after approval
+      if (token.id && trigger !== "signIn") {
+        try {
+          // Dynamically import to avoid edge runtime issues
+          const { findUserByEmailForAuth } = await import("./repositories/userRepository");
+          const freshUser = await findUserByEmailForAuth(token.email as string);
+          if (freshUser) {
+            token.role = freshUser.role;
+          }
+        } catch (error) {
+          console.error("[JWT Callback] Failed to refresh user role:", error);
+          // Keep existing token role if refresh fails
+        }
+      }
+      
       return token;
     },
     async session({ session, token }) {

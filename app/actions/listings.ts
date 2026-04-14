@@ -13,7 +13,7 @@ export async function reserveSurplusItem(listingId: string) {
   const session = await auth();
   
   if (!session?.user?.id) {
-    throw new Error("Unauthorized: You must be logged in to reserve an item.");
+    return { error: "Unauthorized: You must be logged in to reserve an item." };
   }
 
   const userId = session.user.id;
@@ -22,7 +22,7 @@ export async function reserveSurplusItem(listingId: string) {
   const isDecremented = await decrementQuantity(listingId);
   
   if (!isDecremented) {
-    throw new Error("Failed to reserve: Item might be out of stock or does not exist.");
+    return { error: "Failed to reserve: Item might be out of stock or does not exist." };
   }
 
   // 3. Generate a secure 6-digit alphanumeric reservation token
@@ -54,7 +54,7 @@ export async function reserveSurplusItem(listingId: string) {
   } catch (error) {
     // Ideally, we'd roll back the inventory here if this fails, but it's an MVP
     console.error("Critical error: Failed to generate reservation receipt.", error);
-    throw new Error("Failed to finalize reservation. Please contact support.");
+    return { error: "Failed to finalize reservation. Please contact support." };
   }
 
   // 6. Instantly update the UI

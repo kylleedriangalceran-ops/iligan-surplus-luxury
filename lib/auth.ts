@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-import { findUserByEmail } from "./repositories/userRepository";
+import { findUserByEmailForAuth } from "./repositories/userRepository";
 import { authConfig } from "./auth.config";
 
 // ... (Rest of TypeScript augmentation omitted for brevity, but I need to replace the whole authorize function)
@@ -24,7 +24,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         try {
           // Use standard repository instead of raw query
-          const user = await findUserByEmail(email);
+          const user = await findUserByEmailForAuth(email);
 
           if (!user || !user.passwordHash) {
             return null;

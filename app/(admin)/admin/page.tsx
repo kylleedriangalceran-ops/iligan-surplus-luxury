@@ -31,7 +31,7 @@ export default async function AdminPage() {
 
   const statCards = [
     { label: "Total Users", value: stats.totalUsers, icon: "users" },
-    { label: "Customers", value: stats.totalCustomers, icon: "customer" },
+    { label: "Total Revenue", value: `₱${stats.totalRevenue?.toLocaleString() ?? '0'}`, icon: "revenue", accent: true },
     { label: "Merchants", value: stats.totalMerchants, icon: "merchant" },
     { label: "Live Drops", value: stats.totalListings, icon: "listing" },
     { label: "Reservations", value: stats.totalReservations, icon: "reservation" },

@@ -64,6 +64,7 @@ function CardGrid() {
             key={item.title}
             title={item.title}
             merchant={item.merchant}
+            storeId=""
             originalPrice={item.originalPrice}
             surplusPrice={item.surplusPrice}
             availableCount={item.availableCount}

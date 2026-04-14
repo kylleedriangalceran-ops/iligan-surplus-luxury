@@ -1,10 +1,9 @@
 "use client";
 
-import React, { useActionState, useState } from "react";
+import React, { useActionState } from "react";
 import { motion } from "framer-motion";
 import { registerUser } from "@/app/actions/register";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
 import { FloatingInput } from "@/components/shared/FloatingInput";
 
 /* ── SVG icons for each field ── */
@@ -37,33 +36,11 @@ const LockIcon = () => (
 
 
 
-const StoreIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-    <polyline points="9 22 9 12 15 12 15 22" />
-  </svg>
-);
-
-const MapPinIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-    <circle cx="12" cy="10" r="3" />
-  </svg>
-);
-
-const LinkIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-  </svg>
-);
-
 export default function RegisterPage() {
   const [state, formAction, isPending] = useActionState(registerUser, null);
-  const [role, setRole] = useState<"CUSTOMER" | "MERCHANT">("CUSTOMER");
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 text-[#1C1C1E]">
+    <div className="h-screen overflow-hidden flex flex-col items-center justify-center p-6 text-[#1C1C1E] bg-background">
       <motion.div
         className="w-full max-w-[420px]"
         initial={{ opacity: 0, y: 16 }}
@@ -71,7 +48,7 @@ export default function RegisterPage() {
         transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
       >
         {/* Header */}
-        <div className="flex flex-col items-center text-center mb-12 space-y-4">
+        <div className="flex flex-col items-center text-center mb-8 space-y-2">
           <motion.h1
             className="text-2xl font-light tracking-[0.15em] uppercase"
             initial={{ opacity: 0, y: 8 }}
@@ -90,52 +67,8 @@ export default function RegisterPage() {
           </motion.p>
         </div>
 
-        <form action={formAction} className="space-y-2">
+        <form action={formAction} className="space-y-4">
           
-          {/* Segmented Control for Role */}
-          <motion.div
-            className="flex flex-col items-center mb-8"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.25 }}
-          >
-            <input type="hidden" name="role" value={role} />
-            <div className="relative flex w-full border-b border-[#1C1C1E]/10">
-              
-              {/* Underline animation indicator */}
-              <motion.div
-                className="absolute bottom-[-1px] h-[1px] w-1/2 bg-[#1C1C1E] z-10"
-                initial={false}
-                animate={{
-                  x: role === "CUSTOMER" ? 0 : "100%",
-                }}
-                transition={{ type: "spring", bounce: 0.15, duration: 0.4 }}
-              />
-
-              <button
-                type="button"
-                className={cn(
-                  "relative flex-1 py-4 text-xs uppercase tracking-[0.2em] font-medium transition-colors duration-300",
-                  role === "CUSTOMER" ? "text-[#1C1C1E]" : "text-[#1C1C1E]/40 hover:text-[#1C1C1E]/70"
-                )}
-                onClick={() => setRole("CUSTOMER")}
-              >
-                Customer
-              </button>
-              
-              <button
-                type="button"
-                className={cn(
-                  "relative flex-1 py-4 text-xs uppercase tracking-[0.2em] font-medium transition-colors duration-300",
-                  role === "MERCHANT" ? "text-[#1C1C1E]" : "text-[#1C1C1E]/40 hover:text-[#1C1C1E]/70"
-                )}
-                onClick={() => setRole("MERCHANT")}
-              >
-                Merchant
-              </button>
-            </div>
-          </motion.div>
-
           {/* Form fields with Google-style floating labels & icons */}
           <div className="space-y-6">
             <FloatingInput
@@ -182,48 +115,6 @@ export default function RegisterPage() {
               placeholder="Min. 6 characters"
               delay={4}
             />
-
-            {/* Merchant-specific extra fields */}
-            {role === "MERCHANT" && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="space-y-6 overflow-hidden pt-2"
-              >
-                <FloatingInput
-                  id="storeName"
-                  name="storeName"
-                  type="text"
-                  label="Store Name"
-                  required={role === "MERCHANT"}
-                  icon={<StoreIcon />}
-                  placeholder="e.g. Luxe Boutique"
-                  delay={1}
-                />
-
-                <FloatingInput
-                  id="address"
-                  name="address"
-                  type="text"
-                  label="Store Address"
-                  required={role === "MERCHANT"}
-                  icon={<MapPinIcon />}
-                  placeholder="e.g. Tibanga, Iligan City"
-                  delay={2}
-                />
-
-                <FloatingInput
-                  id="socialMedia"
-                  name="socialMedia"
-                  type="url"
-                  label="Social Media or Website"
-                  icon={<LinkIcon />}
-                  placeholder="e.g. https://instagram.com/luxeboutique"
-                  delay={3}
-                />
-              </motion.div>
-            )}
           </div>
 
           {/* Application Error State */}
@@ -247,21 +138,24 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={isPending}
-              className="w-full group relative flex items-center justify-center p-4 disabled:opacity-50 overflow-hidden border border-[#1C1C1E] bg-[#1C1C1E] text-[#FAF9F6] hover:bg-transparent hover:text-[#1C1C1E] transition-all duration-500"
+              className="w-full group relative flex items-center justify-center p-4 disabled:opacity-50 overflow-hidden rounded-md border border-[#1C1C1E] bg-[#1C1C1E] text-[#FAF9F6] hover:bg-transparent hover:text-[#1C1C1E] transition-all duration-500"
             >
               <span className="relative text-xs uppercase tracking-[0.25em] font-medium z-10">
                 {isPending ? "Creating Account..." : "Register"}
               </span>
             </button>
 
-            <Link href="/login" className="text-center text-[10px] uppercase tracking-widest text-[#1C1C1E]/50 hover:text-[#1C1C1E] transition-colors block">
-              Already have an account? Log in
-            </Link>
+            <p className="text-center text-[10px] uppercase tracking-widest text-[#1C1C1E]/50 block">
+              Already have an account?{" "}
+              <Link href="/login" className="underline hover:text-[#1C1C1E] transition-colors">
+                Log in
+              </Link>
+            </p>
           </motion.div>
         </form>
 
         <motion.div
-          className="mt-16 text-center"
+          className="mt-8 text-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 0.4 }}
           transition={{ delay: 0.6 }}

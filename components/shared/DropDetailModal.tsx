@@ -20,6 +20,7 @@ interface DropDetailModalProps {
     availableCount: number;
     latitude?: number | null;
     longitude?: number | null;
+    hasReserved?: boolean;
   };
   action?: (formData: FormData) => void;
 }
@@ -162,14 +163,14 @@ export function DropDetailModal({ isOpen, onClose, item, action }: DropDetailMod
                   <div className="mt-auto pt-6 relative flex flex-col gap-3">
                      {action ? (
                         <div className="w-full shrink-0" onClick={onClose}>
-                          <ReserveButton action={action} disabled={item.availableCount <= 0} fullWidth />
+                          <ReserveButton action={action} disabled={item.availableCount <= 0} hasReserved={item.hasReserved} fullWidth />
                         </div>
                       ) : (
                         <button 
-                          disabled={item.availableCount <= 0}
+                          disabled={item.availableCount <= 0 || item.hasReserved}
                           className="w-full text-xs font-medium uppercase tracking-[0.25em] py-4 px-6 bg-[#1C1C1E] text-[#FAF9F6] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                         >
-                          {item.availableCount <= 0 ? "Out of Stock" : "Reserve Now"}
+                          {item.hasReserved ? "Reserved" : item.availableCount <= 0 ? "Out of Stock" : "Reserve Now"}
                         </button>
                       )}
                       

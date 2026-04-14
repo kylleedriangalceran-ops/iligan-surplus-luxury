@@ -5,8 +5,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { getInbox, getUserConversation, sendUserMessage, getChatChannelName } from "@/app/actions/messages";
+import { getFollowedMerchants } from "@/app/actions/follows";
 import { getPusherClient } from "@/lib/pusher-client";
 import type { ChatMessage } from "@/lib/repositories/messageRepository";
+import { FollowStoreButton } from "./FollowStoreButton";
 
 interface ChatDrawerProps {
   isOpen: boolean;
@@ -25,6 +27,7 @@ export function ChatDrawer({ isOpen, onClose, initialRecipientId, initialRecipie
   const [activeRecipientName, setActiveRecipientName] = useState<string | null>(initialRecipientName || null);
 
   const [inbox, setInbox] = useState<{ userId: string; name: string; lastMessageAt: Date }[]>([]);
+  const [followedStores, setFollowedStores] = useState<{ storeId: string; storeName: string; merchantId: string }[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState("");
   const [isSending, setIsSending] = useState(false);
@@ -47,8 +50,12 @@ export function ChatDrawer({ isOpen, onClose, initialRecipientId, initialRecipie
     if (!isOpen || view !== "INBOX") return;
 
     const fetchInbox = async () => {
-      const data = await getInbox();
-      setInbox(data);
+      const [messagesData, followsData] = await Promise.all([
+        getInbox(),
+        getFollowedMerchants()
+      ]);
+      setInbox(messagesData);
+      setFollowedStores(followsData);
     };
     fetchInbox();
   }, [isOpen, view]);
@@ -95,7 +102,9 @@ export function ChatDrawer({ isOpen, onClose, initialRecipientId, initialRecipie
         };
 
         // Only append if we don't already have this message (avoid duplicates from optimistic updates)
+        // AND if the message was NOT sent by the current user (already optimistically added)
         setMessages((prev) => {
+          if (data.senderId === currentUserId) return prev;
           if (prev.some((m) => m.id === incoming.id)) return prev;
           return [...prev, incoming];
         });
@@ -250,6 +259,36 @@ export function ChatDrawer({ isOpen, onClose, initialRecipientId, initialRecipie
                         </svg>
                       </button>
                     ))
+                  )}
+
+                  {/* Following Merchants Section */}
+                  {followedStores.length > 0 && (
+                     <>
+                        <div className="px-6 py-4 bg-[#1C1C1E]/5 border-y border-[#1C1C1E]/10 flex items-center justify-between">
+                            <h3 className="text-[10px] uppercase tracking-widest font-semibold text-[#1C1C1E]/60">
+                                Following
+                            </h3>
+                        </div>
+                        {followedStores.map((store) => (
+                           <div key={`follow-${store.storeId}`} className="w-full p-6 border-b border-[#1C1C1E]/5 bg-white flex justify-between items-center group">
+                               <div>
+                                  <p className="text-xs font-semibold uppercase tracking-widest text-[#1C1C1E] mb-1">
+                                    {store.storeName}
+                                  </p>
+                                  <FollowStoreButton storeId={store.storeId} />
+                               </div>
+                               <button 
+                                  onClick={() => openConversation(store.merchantId, store.storeName)}
+                                  className="text-[10px] flex items-center gap-2 border border-[#1C1C1E]/10 px-3 py-1.5 uppercase hover:bg-[#1C1C1E]/5 transition-colors font-semibold tracking-widest text-[#1C1C1E]"
+                                >
+                                  Message
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-[#1C1C1E]/60 group-hover:text-[#1C1C1E] transition-colors" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                                  </svg>
+                               </button>
+                           </div>
+                        ))}
+                     </>
                   )}
                 </div>
               ) : (

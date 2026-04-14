@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { ActiveListing } from "@/lib/repositories/listingRepository";
 import { DropDetailModal } from "@/components/shared/DropDetailModal";
+import { usePagination } from "@/hooks/usePagination";
+import { FilterDropdown } from "@/components/shared/FilterDropdown";
 
 interface DashboardTableProps {
   listings: ActiveListing[];
@@ -10,53 +12,99 @@ interface DashboardTableProps {
 
 export function DashboardTable({ listings }: DashboardTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [stockFilter, setStockFilter] = useState("ALL");
+  const [sortFilter, setSortFilter] = useState("NEWEST");
   const [selectedListing, setSelectedListing] = useState<ActiveListing | null>(null);
-  const itemsPerPage = 5;
 
-  const filteredListings = listings.filter((listing) => {
-    const query = searchQuery.toLowerCase();
-    return (
-      listing.title.toLowerCase().includes(query) ||
-      listing.reservedPrice.toString().includes(query)
-    );
-  });
+  const filterFn = useCallback(
+    (listing: ActiveListing, q: string) => {
+      const matchesSearch = listing.title.toLowerCase().includes(q) ||
+        listing.reservedPrice.toString().includes(q);
+        
+      const matchesStock = 
+        stockFilter === "ALL" || 
+        (stockFilter === "IN_STOCK" && listing.quantityAvailable > 2) ||
+        (stockFilter === "LOW_STOCK" && listing.quantityAvailable <= 2 && listing.quantityAvailable > 0) ||
+        (stockFilter === "OUT_OF_STOCK" && listing.quantityAvailable === 0);
+        
+      return matchesSearch && matchesStock;
+    },
+    [stockFilter]
+  );
 
-  const totalPages = Math.max(1, Math.ceil(filteredListings.length / itemsPerPage));
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedListings = filteredListings.slice(startIndex, startIndex + itemsPerPage);
+  const sortedListings = React.useMemo(() => {
+    const list = [...listings];
+    if (sortFilter === "PRICE_LOW_HIGH") return list.sort((a, b) => a.reservedPrice - b.reservedPrice);
+    if (sortFilter === "PRICE_HIGH_LOW") return list.sort((a, b) => b.reservedPrice - a.reservedPrice);
+    if (sortFilter === "STOCK_LOW") return list.sort((a, b) => a.quantityAvailable - b.quantityAvailable);
+    // NEWEST by default
+    return list.sort((a, b) => new Date(b.createdAt || Date.now()).getTime() - new Date(a.createdAt || Date.now()).getTime());
+  }, [listings, sortFilter]);
 
-  // Reset to first page when search changes
-  React.useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery]);
+  const {
+    filteredItems: filteredListings,
+    paginatedItems: paginatedListings,
+    currentPage,
+    totalPages,
+    startIndex,
+    setCurrentPage,
+    showingFrom,
+    showingTo,
+    totalFiltered,
+  } = usePagination({ items: sortedListings, itemsPerPage: 5, searchQuery, filterFn });
 
   return (
     <div>
-      {/* Search Bar */}
-      <div className="mb-6 flex items-center gap-3">
-        <div className="flex items-center justify-center w-10 h-10 border border-[#1C1C1E]/10 bg-white/50 text-[#1C1C1E]/40">
-          <svg 
-            width="16" 
-            height="16" 
-            viewBox="0 0 24 24" 
-            fill="none" 
-            stroke="currentColor" 
-            strokeWidth="1.5" 
-            strokeLinecap="round" 
-            strokeLinejoin="round"
-          >
-            <circle cx="11" cy="11" r="8" />
-            <path d="m21 21-4.3-4.3" />
-          </svg>
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
+        <div className="relative w-full max-w-md">
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#1C1C1E]/40 pointer-events-none">
+            <svg 
+              width="18" 
+              height="18" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="1.5" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.3-4.3" />
+            </svg>
+          </div>
+          <input
+            type="text"
+            placeholder="Search drops by title or price..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-12 pr-4 py-2.5 bg-white border border-[#1C1C1E]/10 rounded-md text-sm font-medium tracking-wide text-[#1C1C1E] outline-none transition-all focus:border-[#1C1C1E]/30 focus:shadow-sm placeholder:text-[#1C1C1E]/40"
+          />
         </div>
-        <input
-          type="text"
-          placeholder="Search drops by title or price..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full max-w-xs px-4 py-2 bg-white/50 border border-[#1C1C1E]/10 text-xs font-medium tracking-wide text-[#1C1C1E] outline-none transition-colors focus:border-[#1C1C1E]/30 placeholder:text-[#1C1C1E]/30 placeholder:uppercase placeholder:tracking-widest"
-        />
+        </div>
+        <div className="shrink-0 flex items-center gap-2">
+          <FilterDropdown
+            label="Stock:"
+            options={[
+              { label: "All Items", value: "ALL" },
+              { label: "In Stock", value: "IN_STOCK" },
+              { label: "Low Stock", value: "LOW_STOCK" },
+              { label: "Out of Stock", value: "OUT_OF_STOCK" },
+            ]}
+            value={stockFilter}
+            onChange={setStockFilter}
+          />
+          <FilterDropdown
+            label="Sort:"
+            options={[
+              { label: "Newest First", value: "NEWEST" },
+              { label: "Price (Low-High)", value: "PRICE_LOW_HIGH" },
+              { label: "Price (High-Low)", value: "PRICE_HIGH_LOW" },
+              { label: "Lowest Stock", value: "STOCK_LOW" },
+            ]}
+            value={sortFilter}
+            onChange={setSortFilter}
+          />
+        </div>
       </div>
 
       {filteredListings.length === 0 ? (
@@ -121,23 +169,23 @@ export function DashboardTable({ listings }: DashboardTableProps) {
           {totalPages > 1 && (
             <div className="py-6 flex items-center justify-between border-t border-[#1C1C1E]/10">
               <span className="text-[10px] uppercase tracking-widest text-[#1C1C1E]/40 font-medium">
-                Showing {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredListings.length)} of {filteredListings.length}
+                Showing {showingFrom}-{showingTo} of {totalFiltered}
               </span>
               <div className="flex gap-2">
                 <button
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
-                  className="px-4 py-2 text-[10px] uppercase tracking-widest font-medium border border-[#1C1C1E]/10 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#1C1C1E]/5 transition-colors"
+                  className="px-4 py-2 rounded-md text-[10px] uppercase tracking-widest font-medium border border-[#1C1C1E]/10 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#1C1C1E]/5 transition-colors"
                 >
                   Prev
                 </button>
-                <div className="flex px-4 py-2 text-[10px] font-medium border border-[#1C1C1E]/10 bg-white/50">
+                <div className="flex px-4 py-2 rounded-md text-[10px] font-medium border border-[#1C1C1E]/10 bg-white/50 items-center">
                   {currentPage} / {totalPages}
                 </div>
                 <button
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
-                  className="px-4 py-2 text-[10px] uppercase tracking-widest font-medium border border-[#1C1C1E]/10 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#1C1C1E]/5 transition-colors"
+                  className="px-4 py-2 rounded-md text-[10px] uppercase tracking-widest font-medium border border-[#1C1C1E]/10 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#1C1C1E]/5 transition-colors"
                 >
                   Next
                 </button>

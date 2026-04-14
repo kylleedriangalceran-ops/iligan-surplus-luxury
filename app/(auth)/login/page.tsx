@@ -27,7 +27,7 @@ export default function LoginPage() {
   const [state, formAction, isPending] = useActionState(loginUser, null);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 text-[#1C1C1E]">
+    <div className="h-screen overflow-hidden flex flex-col items-center justify-center p-6 text-[#1C1C1E] bg-background">
       <motion.div
         className="w-full max-w-[420px]"
         initial={{ opacity: 0, y: 16 }}
@@ -35,7 +35,7 @@ export default function LoginPage() {
         transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
       >
         {/* Header */}
-        <div className="flex flex-col items-center text-center mb-14 space-y-4">
+        <div className="flex flex-col items-center text-center mb-10 space-y-2">
           <motion.h1
             className="text-2xl font-light tracking-[0.15em] uppercase"
             initial={{ opacity: 0, y: 8 }}
@@ -81,6 +81,24 @@ export default function LoginPage() {
             />
           </div>
 
+          {/* Remember Me & Forgot Password */}
+          <div className="flex items-center justify-between pt-2">
+            <label className="flex items-center gap-2 cursor-pointer group">
+              <div className="relative flex items-center justify-center w-4 h-4 border border-[#1C1C1E]/30 bg-transparent transition-colors group-hover:border-[#1C1C1E]">
+                <input type="checkbox" name="remember" className="peer sr-only" />
+                <svg className="w-3 h-3 text-[#1C1C1E] opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </div>
+              <span className="text-[10px] uppercase tracking-widest text-[#1C1C1E]/60 group-hover:text-[#1C1C1E] transition-colors">
+                Remember me
+              </span>
+            </label>
+            <Link href="/forgot-password" className="text-[10px] uppercase tracking-widest text-[#1C1C1E]/60 hover:text-[#1C1C1E] transition-colors">
+              Forgot Password?
+            </Link>
+          </div>
+
           {/* Application Error State */}
           {state?.error && (
             <motion.p
@@ -102,7 +120,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isPending}
-              className="w-full group relative flex items-center justify-center p-4 disabled:opacity-50 overflow-hidden"
+              className="w-full group relative flex items-center justify-center p-4 rounded-md disabled:opacity-50 overflow-hidden"
             >
               {/* Button Background Transition */}
               <div className="absolute inset-0 bg-[#1C1C1E] transition-transform duration-700 ease-out group-hover:scale-[1.02]" />
@@ -112,14 +130,17 @@ export default function LoginPage() {
               </span>
             </button>
 
-            <Link href="/register" className="text-center text-[10px] uppercase tracking-widest text-[#1C1C1E]/50 hover:text-[#1C1C1E] transition-colors block">
-              Don&apos;t have an account? Register
-            </Link>
+            <p className="text-center text-[10px] uppercase tracking-widest text-[#1C1C1E]/50 block">
+              Don&apos;t have an account?{" "}
+              <Link href="/register" className="underline hover:text-[#1C1C1E] transition-colors">
+                Register
+              </Link>
+            </p>
           </motion.div>
         </form>
 
         <motion.div
-          className="mt-16 text-center"
+          className="mt-10 text-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 0.4 }}
           transition={{ delay: 0.6 }}
