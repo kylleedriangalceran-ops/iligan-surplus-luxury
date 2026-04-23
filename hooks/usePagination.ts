@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 
 /**
  * Generic search + pagination hook.
@@ -19,32 +19,34 @@ export function usePagination<T>({
   filterFn: (item: T, query: string) => boolean;
 }) {
   const [currentPage, setCurrentPage] = useState(1);
+  const [prevQuery, setPrevQuery] = useState(searchQuery);
+
+  // Reset to page 1 when search query changes (React-recommended state-during-render pattern)
+  if (prevQuery !== searchQuery) {
+    setPrevQuery(searchQuery);
+    setCurrentPage(1);
+  }
 
   const filteredItems = useMemo(() => {
-    if (!searchQuery.trim()) return items;
-    const q = searchQuery.toLowerCase();
-    return items.filter((item) => filterFn(item, q));
+    const q = (searchQuery || "").trim().toLowerCase();
+    return (items || []).filter((item) => filterFn(item, q));
   }, [items, searchQuery, filterFn]);
 
   const totalPages = Math.max(1, Math.ceil(filteredItems.length / itemsPerPage));
-  const startIndex = (currentPage - 1) * itemsPerPage;
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const startIndex = (safeCurrentPage - 1) * itemsPerPage;
   const paginatedItems = filteredItems.slice(startIndex, startIndex + itemsPerPage);
-
-  // Reset to first page when search changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery]);
 
   return {
     filteredItems,
     paginatedItems,
-    currentPage,
+    currentPage: safeCurrentPage,
     totalPages,
     startIndex,
     setCurrentPage,
     goToPrevPage: () => setCurrentPage((p) => Math.max(1, p - 1)),
     goToNextPage: () => setCurrentPage((p) => Math.min(totalPages, p + 1)),
-    showingFrom: startIndex + 1,
+    showingFrom: filteredItems.length === 0 ? 0 : startIndex + 1,
     showingTo: Math.min(startIndex + itemsPerPage, filteredItems.length),
     totalFiltered: filteredItems.length,
   };

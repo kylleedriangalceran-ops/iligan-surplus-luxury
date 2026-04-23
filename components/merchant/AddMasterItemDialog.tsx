@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import Image from 'next/image';
+import { useState, useTransition } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { UploadDropzone } from "@/utils/uploadthing";
 import { useToast } from "@/hooks/useToast";
@@ -12,6 +13,7 @@ export function AddMasterItemDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+  const [dragCounter, setDragCounter] = useState(0);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -49,7 +51,12 @@ export function AddMasterItemDialog() {
             </p>
             {uploadedImageUrl ? (
               <div className="relative aspect-4/5 w-full overflow-hidden rounded-2xl border border-[#1C1C1E]/10">
-                <img src={uploadedImageUrl} alt="Cover" className="h-full w-full object-cover" />
+                <Image 
+                  src={uploadedImageUrl} 
+                  alt="Cover" 
+                  className="h-full w-full object-cover" 
+                  fill 
+                />
                 <button
                   type="button"
                   onClick={() => setUploadedImageUrl(null)}
@@ -59,6 +66,11 @@ export function AddMasterItemDialog() {
                 </button>
               </div>
             ) : (
+            <div
+              onDragEnter={() => setDragCounter(p => p + 1)}
+              onDragLeave={() => setDragCounter(p => p - 1)}
+              onDrop={() => setDragCounter(0)}
+            >
               <UploadDropzone
                 endpoint="imageUploader"
                 onClientUploadComplete={(res) => {
@@ -71,7 +83,7 @@ export function AddMasterItemDialog() {
                   toast(`Upload failed: ${error.message}`, "error");
                 }}
                 config={{ mode: "auto" }}
-                content={{ label: "Choose a file or drag and drop", allowedContent: "PNG/JPG • Up to 4MB" }}
+                content={{ label: dragCounter > 0 ? "Drag and Drop the file here" : "Choose a file or drag and drop", allowedContent: "PNG/JPG • Up to 4MB" }}
                 appearance={{
                   container:
                     "bg-transparent cursor-pointer py-4 flex flex-col items-center justify-center max-w-full overflow-hidden",
@@ -79,10 +91,11 @@ export function AddMasterItemDialog() {
                     "text-[#1C1C1E] text-[13px] font-semibold tracking-widest uppercase hover:text-[#1C1C1E]/70 transition-colors mt-2 whitespace-nowrap",
                   allowedContent: "text-[#1C1C1E]/60 text-[10px] tracking-wider uppercase mt-1 whitespace-nowrap",
                   button:
-                    "mt-4 rounded-[8px] bg-[#1C1C1E] text-[#FAF9F6] text-[11px] font-semibold uppercase tracking-[0.1em] hover:bg-[#1C1C1E]/90 transition-all px-6 py-3.5 whitespace-nowrap cursor-pointer",
+                    "mt-12 text-xs font-medium uppercase tracking-widest !text-[#1C1C1E]/60 hover:!text-[#1C1C1E] transition-colors cursor-pointer !bg-transparent !border-none !p-0 !m-0 !shadow-none inline-flex items-center justify-center",
                   uploadIcon: "text-[#1C1C1E]/50 w-7 h-7 mx-auto",
                 }}
               />
+            </div>
             )}
           </div>
 

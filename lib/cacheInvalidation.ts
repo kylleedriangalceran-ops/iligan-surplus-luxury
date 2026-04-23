@@ -38,6 +38,9 @@ export const CACHE_KEYS = {
   // Follows
   USER_FOLLOWS_PREFIX: 'user:follows:',
   STORE_FOLLOWERS_PREFIX: 'store:followers:',
+  // Reviews
+  REVIEWS_LISTING_PREFIX: 'reviews:listing:',
+  REVIEWS_AGGREGATED_PREFIX: 'reviews:aggregated:',
 } as const;
 
 // ─── TTL Constants (seconds) ────────────────────────────────────
@@ -57,6 +60,7 @@ export const CACHE_TTL = {
   STORE_BY_MERCHANT: 300,
   STORE_STATS: 30,
   FOLLOWS: 300,
+  REVIEWS: 120,
 } as const;
 
 // ─── Invalidation Helpers ──────────────────────────────────────
@@ -180,4 +184,14 @@ export async function invalidateFollowCaches(userId: string, storeId: string) {
  */
 export async function invalidateProductCaches(merchantId: string) {
   await safeDelete(`${CACHE_KEYS.PRODUCTS_BY_MERCHANT_PREFIX}${merchantId}`);
+}
+
+/**
+ * Call after review create/update/delete.
+ */
+export async function invalidateReviewCaches(listingId: string) {
+  await safeDelete(
+    `${CACHE_KEYS.REVIEWS_LISTING_PREFIX}${listingId}`,
+    `${CACHE_KEYS.REVIEWS_AGGREGATED_PREFIX}${listingId}`
+  );
 }

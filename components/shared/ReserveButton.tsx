@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useTransition } from "react";
+import { useTransition } from "react";
 import { useToast } from "@/hooks/useToast";
 import { cn } from "@/lib/utils";
 

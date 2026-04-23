@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from "react";
 import { ActiveListing } from "@/lib/repositories/listingRepository";
-import { DropDetailModal } from "@/components/shared/DropDetailModal";
+import { ProductDetailsSheet } from "@/components/product/ProductDetailsSheet";
 import { usePagination } from "@/hooks/usePagination";
 import { FilterDropdown } from "@/components/shared/FilterDropdown";
 
@@ -38,7 +38,7 @@ export function DashboardTable({ listings }: DashboardTableProps) {
     if (sortFilter === "PRICE_HIGH_LOW") return list.sort((a, b) => b.reservedPrice - a.reservedPrice);
     if (sortFilter === "STOCK_LOW") return list.sort((a, b) => a.quantityAvailable - b.quantityAvailable);
     // NEWEST by default
-    return list.sort((a, b) => new Date(b.createdAt || Date.now()).getTime() - new Date(a.createdAt || Date.now()).getTime());
+    return list.sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime());
   }, [listings, sortFilter]);
 
   const {
@@ -46,7 +46,6 @@ export function DashboardTable({ listings }: DashboardTableProps) {
     paginatedItems: paginatedListings,
     currentPage,
     totalPages,
-    startIndex,
     setCurrentPage,
     showingFrom,
     showingTo,
@@ -79,7 +78,6 @@ export function DashboardTable({ listings }: DashboardTableProps) {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-12 pr-4 py-2.5 bg-white border border-[#1C1C1E]/10 rounded-md text-sm font-medium tracking-wide text-[#1C1C1E] outline-none transition-all focus:border-[#1C1C1E]/30 focus:shadow-sm placeholder:text-[#1C1C1E]/40"
           />
-        </div>
         </div>
         <div className="shrink-0 flex items-center gap-2">
           <FilterDropdown
@@ -196,12 +194,14 @@ export function DashboardTable({ listings }: DashboardTableProps) {
       )}
 
       {selectedListing && (
-        <DropDetailModal
+        <ProductDetailsSheet
           isOpen={!!selectedListing}
           onClose={() => setSelectedListing(null)}
+          listingId={selectedListing.id}
           item={{
             title: selectedListing.title,
             merchant: selectedListing.storeName,
+            merchantId: selectedListing.storeId,
             originalPrice: selectedListing.originalPrice,
             surplusPrice: selectedListing.reservedPrice,
             imageUrl: selectedListing.imageUrl,

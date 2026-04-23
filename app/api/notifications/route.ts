@@ -61,14 +61,25 @@ export async function PATCH(req: Request) {
   }
 }
 
-export async function DELETE() {
+export async function DELETE(req: Request) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ success: false }, { status: 401, headers: noStoreHeaders });
     }
 
-    await clearNotificationsForUser(session.user.id);
+    const { searchParams } = new URL(req.url);
+    const notificationId = searchParams.get("id");
+
+    if (notificationId) {
+      // Direct query to avoid adding more repository exports
+      const { query } = await import("@/lib/db");
+      const { invalidateNotificationCaches } = await import("@/lib/cacheInvalidation");
+      await query("DELETE FROM notifications WHERE id = $1 AND (user_id = $2 OR user_id IS NULL)", [notificationId, session.user.id]);
+      await invalidateNotificationCaches(session.user.id);
+    } else {
+      await clearNotificationsForUser(session.user.id);
+    }
     return NextResponse.json({ success: true }, { headers: noStoreHeaders });
   } catch {
     return NextResponse.json({ success: false }, { status: 500, headers: noStoreHeaders });

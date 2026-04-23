@@ -1,5 +1,3 @@
-import React from "react";
-
 export default function AdminLoading() {
   return (
     <div className="min-h-screen py-16 px-6 md:px-12 lg:px-24">

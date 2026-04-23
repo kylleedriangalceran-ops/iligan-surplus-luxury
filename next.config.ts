@@ -3,6 +3,13 @@ import type { NextConfig } from "next";
 const publicAssetCacheControl = "public, max-age=2592000, s-maxage=2592000, stale-while-revalidate=86400";
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: [
+    "192.168.7.142",
+    "192.168.7.142:3000",
+    "192.168.7.142:3001",
+    "localhost",
+    "localhost:3000"
+  ],
   images: {
     remotePatterns: [
       {
@@ -17,6 +24,7 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "*.uploadthing.com",
       },
+      
     ],
   },
   async headers() {
@@ -29,6 +37,7 @@ const nextConfig: NextConfig = {
             value: publicAssetCacheControl,
           },
         ],
+        
       },
     ];
   },

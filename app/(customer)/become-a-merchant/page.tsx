@@ -119,9 +119,9 @@ export default function BecomeAMerchantPage() {
                   <button
                     type="submit"
                     disabled={isPending}
-                    className="w-full group relative flex items-center justify-center p-4 disabled:opacity-50 overflow-hidden border border-[#1C1C1E] bg-[#1C1C1E] text-[#FAF9F6] hover:bg-transparent hover:text-[#1C1C1E] transition-all duration-500"
+                    className="w-full mt-2 relative flex items-center justify-center px-8 py-4 border border-[#1C1C1E] bg-transparent rounded-[10px] text-[#1C1C1E] hover:bg-[#1C1C1E] hover:text-[#FAF9F6] transition-all duration-300 disabled:opacity-50"
                   >
-                    <span className="relative text-xs uppercase tracking-[0.25em] font-medium z-10">
+                    <span className="text-xs uppercase tracking-[0.25em] font-medium">
                       {isPending ? "Submitting..." : "Submit Application"}
                     </span>
                   </button>

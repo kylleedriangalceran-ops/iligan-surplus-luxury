@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { Package, LayoutDashboard, Container } from "lucide-react";
 
 interface SidebarProps {
   user: {
@@ -15,46 +16,33 @@ interface SidebarProps {
 }
 
 /* ── Icons ── */
-const SearchIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="11" cy="11" r="8" />
-    <path d="m21 21-4.3-4.3" />
-  </svg>
-);
-
 const BookmarkIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
   </svg>
 );
 
 const ClipboardIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
     <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
     <path d="M9 14l2 2 4-4" />
   </svg>
 );
 
-const GridIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="3" y="3" width="7" height="7" rx="1" />
-    <rect x="14" y="3" width="7" height="7" rx="1" />
-    <rect x="14" y="14" width="7" height="7" rx="1" />
-    <rect x="3" y="14" width="7" height="7" rx="1" />
-  </svg>
-);
+
 
 const ShieldIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
   </svg>
 );
 
 const MapPinIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-    <circle cx="12" cy="10" r="3" />
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
+    <line x1="9" y1="3" x2="9" y2="18" />
+    <line x1="15" y1="6" x2="15" y2="21" />
   </svg>
 );
 
@@ -66,17 +54,17 @@ export function Sidebar({ user, isOpen, onClose }: SidebarProps) {
   if (user.role === "ADMIN") {
     links.push(
       { href: "/admin", label: "Admin", icon: <ShieldIcon /> },
-      { href: "/feed", label: "Curated Drops", icon: <SearchIcon /> }
+      { href: "/feed", label: "Curated Drops", icon: <Package size={20} strokeWidth={1.5} /> }
     );
   } else if (user.role === "MERCHANT") {
     links.push(
-      { href: "/dashboard", label: "Dashboard", icon: <SearchIcon /> },
-      { href: "/dashboard/inventory", label: "Inventory", icon: <GridIcon /> },
+      { href: "/dashboard", label: "Dashboard", icon: <LayoutDashboard size={20} strokeWidth={1.5} /> },
+      { href: "/dashboard/inventory", label: "Inventory", icon: <Container size={20} strokeWidth={1.5} /> },
       { href: "/dashboard/reservations", label: "Orders", icon: <ClipboardIcon /> }
     );
   } else {
     links.push(
-      { href: "/feed", label: "Curated Drops", icon: <SearchIcon /> },
+      { href: "/feed", label: "Curated Drops", icon: <Package size={20} strokeWidth={1.5} /> },
       { href: "/reservations", label: "My Reserves", icon: <BookmarkIcon /> }
     );
   }
@@ -112,14 +100,14 @@ export function Sidebar({ user, isOpen, onClose }: SidebarProps) {
           // Base desktop behavior: 
           "md:sticky md:translate-x-0 overflow-hidden",
           // Width toggling for desktop:
-          isOpen ? "w-72 px-4 md:w-72 lg:px-4" : "w-72 px-4 md:w-[84px] md:px-4",
+          isOpen ? "w-[240px] px-3 md:w-[240px] lg:px-3" : "w-[240px] px-3 md:w-[72px] md:px-3",
           // Mobile translation:
           isOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full",
           "md:pt-28"
         )}
       >
-        <div className={cn("mb-6 transition-opacity duration-300", isOpen ? "opacity-100 px-4" : "md:opacity-0")}>
-          <p className="text-[12px] text-[#1C1C1E]/40 font-semibold mb-2 whitespace-nowrap">Navigation</p>
+        <div className={cn("mb-5 transition-opacity duration-300", isOpen ? "opacity-100 px-3" : "md:opacity-0")}>
+          <p className="text-[10px] uppercase tracking-widest text-[#1C1C1E]/40 font-bold mb-2 whitespace-nowrap">Navigation</p>
         </div>
 
         <nav className="flex flex-col gap-1 w-full">
@@ -136,11 +124,11 @@ export function Sidebar({ user, isOpen, onClose }: SidebarProps) {
                 className={cn(
                   "group relative flex items-center p-2 text-[14px] transition-all duration-300 rounded-[8px] w-full overflow-hidden",
                   isActive
-                    ? "text-[#1C1C1E] bg-[#1C1C1E]/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.05),inset_0_1px_0_rgba(255,255,255,0.6)] font-semibold"
-                    : "text-[#1C1C1E]/60 font-medium hover:text-[#1C1C1E] hover:bg-[#1C1C1E]/[0.03]"
+                    ? "text-[#1C1C1E] bg-[#1C1C1E]/6 shadow-[0_1px_3px_rgba(0,0,0,0.05),inset_0_1px_0_rgba(255,255,255,0.6)] font-semibold"
+                    : "text-[#1C1C1E]/60 font-medium hover:text-[#1C1C1E] hover:bg-[#1C1C1E]/3"
                 )}
               >
-                <div className="w-9 h-9 flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 flex items-center justify-center shrink-0">
                   <div className={cn(
                     "relative flex items-center justify-center transition-colors",
                     isActive ? "text-[#1C1C1E]" : "text-[#1C1C1E]/45 group-hover:text-[#1C1C1E]/75"
@@ -151,8 +139,8 @@ export function Sidebar({ user, isOpen, onClose }: SidebarProps) {
                 
                 {/* Label text */}
                 <span className={cn(
-                  "ml-3 whitespace-nowrap transition-all duration-300",
-                  isOpen ? "opacity-100 translate-x-0 w-auto" : "opacity-0 -translate-x-4 w-0 absolute left-14 invisible",
+                  "ml-2.5 whitespace-nowrap transition-all duration-300",
+                  isOpen ? "opacity-100 translate-x-0 w-auto" : "opacity-0 -translate-x-4 w-0 absolute left-12 invisible",
                   isActive ? "font-semibold text-[#1C1C1E]" : "font-medium"
                 )}>
                   {link.label}

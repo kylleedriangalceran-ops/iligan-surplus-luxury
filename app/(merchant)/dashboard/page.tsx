@@ -13,6 +13,11 @@ import { RecentOrdersTable } from "@/components/merchant/RecentOrdersTable";
 import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
 import { DashboardDrops } from "@/components/merchant/DashboardDrops";
 import { RealtimeClock } from "@/components/shared/RealtimeClock";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Dashboard",
+};
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +30,7 @@ export default async function MerchantDashboardPage() {
   if (!store) {
     return (
       <div className="max-w-2xl mx-auto">
-        <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'Merchant Dashboard' }]} className="mb-6" />
+        <Breadcrumbs items={[{ label: 'Merchant Dashboard' }]} className="mb-6" />
         <div className="mb-12">
           <h1 className="text-3xl font-light tracking-widest uppercase mb-4">
             Welcome, {session.user.name}
@@ -53,18 +58,18 @@ export default async function MerchantDashboardPage() {
 
   return (
     <div className="max-w-6xl mx-auto">
-      <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'Dashboard' }]} className="mb-6" />
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+      <Breadcrumbs items={[{ label: 'Dashboard' }]} className="mb-4 md:mb-6" />
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 md:gap-6 mb-8 md:mb-12">
         <div>
-          <h1 className="text-3xl font-light tracking-widest uppercase mb-2">
+          <h1 className="text-xl md:text-3xl font-light tracking-widest uppercase mb-1 md:mb-2">
             {store.name}
           </h1>
-          <p className="text-sm text-[#1C1C1E]/60 uppercase tracking-widest">
+          <p className="text-xs md:text-sm text-[#1C1C1E]/60 uppercase tracking-widest">
             {store.location}
           </p>
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 md:gap-3 overflow-x-auto scrollbar-hide pb-1">
           <SetLocationWrapper 
             currentLat={store.latitude}
             currentLng={store.longitude}
@@ -82,7 +87,7 @@ export default async function MerchantDashboardPage() {
         <RecentOrdersTable orders={recentOrders} />
       </div>
 
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-6 md:mb-8 flex items-center justify-between">
         <h2 className="text-xs uppercase tracking-[0.2em] font-semibold text-[#1C1C1E]">
           Active Drops
         </h2>

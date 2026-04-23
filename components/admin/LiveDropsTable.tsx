@@ -64,7 +64,6 @@ export function LiveDropsTable({ drops }: { drops: LiveDrop[] }) {
     paginatedItems: paginatedDrops,
     currentPage,
     totalPages,
-    startIndex,
     setCurrentPage,
     showingFrom,
     showingTo,

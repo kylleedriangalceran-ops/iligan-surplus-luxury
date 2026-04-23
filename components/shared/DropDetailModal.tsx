@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { ReserveButton } from "./ReserveButton";
@@ -66,7 +66,7 @@ export function DropDetailModal({ isOpen, onClose, item, action }: DropDetailMod
               <div className="flex flex-col md:flex-row h-full max-h-[85vh] md:max-h-[600px]">
                 
                 {/* Image Section */}
-                <div className="relative w-full md:w-1/2 aspect-[4/5] md:aspect-auto bg-[#1C1C1E]/5">
+                <div className="relative w-full md:w-1/2 aspect-square md:aspect-auto bg-[#1C1C1E]/5">
                   {item.imageUrl ? (
                     <Image
                       src={item.imageUrl}
@@ -152,7 +152,7 @@ export function DropDetailModal({ isOpen, onClose, item, action }: DropDetailMod
                       {item.latitude && item.longitude && (
                         <div className="pt-2">
                            <h4 className="text-[10px] uppercase tracking-[0.2em] text-[#1C1C1E]/40 font-semibold mb-3">Pickup Location</h4>
-                           <div className="w-full h-[180px] bg-[#1C1C1E]/5 border border-[#1C1C1E]/10 flex-shrink-0">
+                           <div className="w-full h-[180px] bg-[#1C1C1E]/5 border border-[#1C1C1E]/10 shrink-0">
                              <LuxuryMap latitude={item.latitude} longitude={item.longitude} />
                            </div>
                         </div>

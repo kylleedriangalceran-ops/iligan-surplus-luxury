@@ -14,6 +14,8 @@ export interface MapMerchant {
   latitude: number;
   longitude: number;
   activeDrops: number;
+  averageRating: number;
+  reviewCount: number;
 }
 
 const MAP_CACHE_KEY = "map:merchants:v1";
@@ -39,7 +41,25 @@ export async function getApprovedMerchantsForMap(): Promise<MapMerchant[]> {
         (SELECT COUNT(*) FROM surplus_listings sl 
          WHERE sl.store_id = s.id AND sl.quantity_available > 0),
         0
-      )::int AS active_drops
+      )::int AS active_drops,
+      COALESCE(
+        (
+          SELECT ROUND(AVG(r.rating)::numeric, 1)
+          FROM reviews r
+          JOIN surplus_listings sl ON r.listing_id = sl.id
+          WHERE sl.store_id = s.id
+        ),
+        0
+      )::float AS average_rating,
+      COALESCE(
+        (
+          SELECT COUNT(r.id)
+          FROM reviews r
+          JOIN surplus_listings sl ON r.listing_id = sl.id
+          WHERE sl.store_id = s.id
+        ),
+        0
+      )::int AS review_count
     FROM stores s
     JOIN users u ON s.merchant_id = u.id
     WHERE s.latitude IS NOT NULL 
@@ -58,6 +78,8 @@ export async function getApprovedMerchantsForMap(): Promise<MapMerchant[]> {
     latitude: parseFloat(row.latitude),
     longitude: parseFloat(row.longitude),
     activeDrops: parseInt(row.active_drops) || 0,
+    averageRating: parseFloat(row.average_rating) || 0,
+    reviewCount: parseInt(row.review_count) || 0,
   }));
 
   await setJsonCache(MAP_CACHE_KEY, merchants, CACHE_TTL.ACTIVE_LISTINGS);

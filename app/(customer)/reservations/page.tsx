@@ -19,12 +19,27 @@ export default async function CustomerReservationsPage() {
       <div className="max-w-4xl mx-auto">
         <header className="mb-12 border-b border-[#1C1C1E]/10 pb-8 mt-4 md:mt-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-            <Breadcrumbs 
-              items={[
-                { label: 'Reserve', href: '/' },
-                { label: 'My Reserves' }
-              ]} 
-            />
+            {(() => {
+              let rootLabel = 'Reserve';
+              let rootHref = '/';
+              
+              if (session?.user?.role === 'ADMIN') {
+                rootLabel = 'Admin';
+                rootHref = '/admin';
+              } else if (session?.user?.role === 'MERCHANT') {
+                rootLabel = 'Dashboard';
+                rootHref = '/dashboard';
+              }
+
+              return (
+                <Breadcrumbs 
+                  items={[
+                    { label: rootLabel, href: rootHref },
+                    { label: 'My Reserves' }
+                  ]} 
+                />
+              );
+            })()}
           </div>
           <h1 className="text-3xl md:text-4xl font-light tracking-[0.1em] uppercase mb-2">
             My Reserves

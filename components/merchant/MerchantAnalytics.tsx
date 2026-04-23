@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import {
@@ -37,12 +37,12 @@ export function MerchantAnalytics({ analytics }: MerchantAnalyticsProps) {
   );
 
   return (
-    <div className="space-y-8 mb-12">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="space-y-6 md:space-y-8 mb-8 md:mb-12">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         {/* Revenue Overview */}
         <Card className="lg:col-span-2 bg-white border-[#1C1C1E]/10">
-          <CardHeader className="pb-2">
-            <div className="flex items-start justify-between gap-4">
+          <CardHeader className="pb-2 px-4 md:px-6">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4">
               <div>
                 <CardTitle className="text-lg font-semibold tracking-tight text-[#1C1C1E]">
                   Revenue Overview
@@ -77,10 +77,10 @@ export function MerchantAnalytics({ analytics }: MerchantAnalyticsProps) {
                 revenue: { label: "Revenue", color: "#1C1C1E" },
                 surplusEarnings: { label: "Surplus Earnings", color: "#C9A24A" },
               }}
-              className="h-[280px]"
+              className="h-[200px] md:h-[280px]"
             >
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={series} margin={{ left: 6, right: 12, top: 8, bottom: 0 }}>
+                <AreaChart data={series} margin={{ left: -10, right: 6, top: 8, bottom: 0 }}>
                   <defs>
                     <linearGradient id="revFill" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="#1C1C1E" stopOpacity={0.14} />
@@ -96,12 +96,13 @@ export function MerchantAnalytics({ analytics }: MerchantAnalyticsProps) {
                     dataKey="month"
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fill: "#1C1C1E", opacity: 0.55, fontSize: 11 }}
+                    tick={{ fill: "#1C1C1E", opacity: 0.55, fontSize: 10 }}
                   />
                   <YAxis
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fill: "#1C1C1E", opacity: 0.45, fontSize: 11 }}
+                    tick={{ fill: "#1C1C1E", opacity: 0.45, fontSize: 10 }}
+                    width={40}
                     tickFormatter={(v) => {
                       const n = Number(v);
                       if (n >= 1000) return `${Math.round(n / 1000)}k`;
@@ -148,10 +149,10 @@ export function MerchantAnalytics({ analytics }: MerchantAnalyticsProps) {
               config={{
                 sold: { label: "Units Sold", color: "#2F6F5A" },
               }}
-              className="h-[280px]"
+              className="h-[220px] md:h-[280px]"
             >
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={analytics.topItems} layout="vertical" margin={{ left: 10, right: 12, top: 6, bottom: 6 }}>
+                <BarChart data={analytics.topItems} layout="vertical" margin={{ left: 0, right: 12, top: 6, bottom: 6 }}>
                   <CartesianGrid stroke="transparent" horizontal={false} vertical={false} />
                   <XAxis
                     type="number"
@@ -165,7 +166,7 @@ export function MerchantAnalytics({ analytics }: MerchantAnalyticsProps) {
                     axisLine={false}
                     tickLine={false}
                     tick={{ fill: "#1C1C1E", opacity: 0.6, fontSize: 11 }}
-                    width={110}
+                    width={90}
                   />
                   <ChartTooltip content={<ChartTooltipContent className="bg-white/95 backdrop-blur-lg border-[#1C1C1E]/10" />} />
                   <Bar dataKey="sold" fill="#2F6F5A" radius={[8, 8, 8, 8]} maxBarSize={32} />

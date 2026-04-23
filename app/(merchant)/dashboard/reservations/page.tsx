@@ -25,7 +25,7 @@ export default async function MerchantReservationsPage() {
 
   return (
     <div className="max-w-6xl mx-auto">
-      <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'Dashboard', href: '/dashboard' }, { label: 'Orders' }]} className="mb-6" />
+      <Breadcrumbs items={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'Orders' }]} className="mb-6" />
       <div className="mb-12">
         <h1 className="text-3xl font-light tracking-[0.1em] uppercase mb-2">
           Reservations

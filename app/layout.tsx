@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Inter } from "next/font/google";
+import { Geist_Mono, Inter } from "next/font/google";
 import "@/styles/globals.css";
 import "leaflet/dist/leaflet.css";
 import { cn } from "@/lib/utils";
@@ -10,20 +10,24 @@ import { AuthFeedback } from "@/components/shared/AuthFeedback";
 import { Suspense } from "react";
 import NextTopLoader from "nextjs-toploader";
 
-const inter = Inter({subsets:['latin'],variable:'--font-sans'});
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-sans',
+  display: 'swap',
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: 'swap',
+  preload: false,
 });
 
 export const metadata: Metadata = {
-  title: "RESERVE | Curated Surplus Iligan",
+  title: {
+    template: 'SurePlus | %s',
+    default: 'SurePlus | Curated Surplus Iligan',
+  },
   description: "Exclusive access to end-of-day surplus inventory from Iligan City's top bakeries, cafes, and restaurants.",
 };
 
@@ -47,8 +51,8 @@ export default async function RootLayout({
   return (
     <html
       lang="en"
-      className={cn("h-full", "antialiased", geistSans.variable, geistMono.variable, "font-sans", inter.variable)}
-      style={{ scrollBehavior: 'smooth' }}
+      data-scroll-behavior="smooth"
+      className={cn("h-full", "antialiased", geistMono.variable, "font-sans", inter.variable)}
     >
       <body className="min-h-full flex flex-col noise-overlay">
         <NextTopLoader
@@ -65,26 +69,47 @@ export default async function RootLayout({
         <SessionProvider session={session}>
             <Toaster
               position="top-right"
+              gutter={10}
               toastOptions={{
                 duration: 4000,
                 style: {
-                  background: '#1C1C1E',
-                  color: '#FAF9F6',
+                  fontFamily: 'var(--font-sans), system-ui, sans-serif',
                   fontSize: '11px',
                   fontWeight: 500,
                   textTransform: 'uppercase' as const,
-                  letterSpacing: '0.12em',
-                  borderRadius: '4px',
-                  padding: '14px 18px',
-                  boxShadow: '0 8px 32px rgba(28,28,30,0.25)',
-                  border: '1px solid rgba(250,249,246,0.08)',
-                  maxWidth: '380px',
+                  letterSpacing: '0.1em',
+                  borderRadius: '8px',
+                  padding: '12px 16px',
+                  maxWidth: '340px',
+                  boxShadow: '0 4px 24px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  backdropFilter: 'blur(8px)',
                 },
                 success: {
-                  iconTheme: { primary: '#D4AF37', secondary: '#1C1C1E' },
+                  style: {
+                    background: '#F0FDF4',
+                    color: '#166534',
+                    border: '1px solid #BBF7D0',
+                  },
+                  iconTheme: { primary: '#16a34a', secondary: '#F0FDF4' },
                 },
                 error: {
-                  iconTheme: { primary: '#FAF9F6', secondary: '#1C1C1E' },
+                  style: {
+                    background: '#FEF2F2',
+                    color: '#991B1B',
+                    border: '1px solid #FECACA',
+                  },
+                  iconTheme: { primary: '#dc2626', secondary: '#FEF2F2' },
+                },
+                loading: {
+                  style: {
+                    background: '#FFFBEB',
+                    color: '#92400E',
+                    border: '1px solid #FDE68A',
+                  },
+                  iconTheme: { primary: '#d97706', secondary: '#FFFBEB' },
                 },
               }}
             />

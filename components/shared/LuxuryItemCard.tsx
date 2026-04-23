@@ -5,10 +5,11 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { ReserveButton } from "./ReserveButton";
-import { DropDetailModal } from "./DropDetailModal";
+import { ProductDetailsSheet } from "@/components/product/ProductDetailsSheet";
 import { FollowStoreButton } from "./FollowStoreButton";
 
 interface LuxuryItemCardProps {
+  listingId: string;
   title: string;
   merchant: string;
   storeId: string;
@@ -20,9 +21,12 @@ interface LuxuryItemCardProps {
   action?: (formData: FormData) => void;
   index?: number;
   hasReserved?: boolean;
+  averageRating?: number;
+  reviewCount?: number;
 }
 
 export function LuxuryItemCard({
+  listingId,
   title,
   merchant,
   storeId,
@@ -34,8 +38,9 @@ export function LuxuryItemCard({
   action,
   index = 0,
   hasReserved = false,
+  averageRating = 0,
 }: LuxuryItemCardProps) {
-  const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const [isSheetOpen, setIsSheetOpen] = React.useState(false);
   const isSoldOut = availableCount <= 0;
 
   return (
@@ -53,7 +58,7 @@ export function LuxuryItemCard({
       {/* Image Frame — Editorial 4:5 Portrait */}
       <button 
         type="button" 
-        onClick={() => setIsModalOpen(true)}
+        onClick={() => setIsSheetOpen(true)}
         className="relative aspect-4/5 w-full overflow-hidden bg-[#1C1C1E]/5 text-left border-b border-[#1C1C1E]/5 focus:outline-none"
       >
         {imageUrl ? (
@@ -114,8 +119,14 @@ export function LuxuryItemCard({
               </p>
               <FollowStoreButton storeId={storeId} />
               <div className="flex items-center gap-0.5 text-[10px] ml-auto">
-                <span className="text-[#1C1C1E]">★</span>
-                <span className="font-semibold text-[#1C1C1E]">4.8</span>
+                {averageRating > 0 ? (
+                  <>
+                    <span className="text-[#1C1C1E]">★</span>
+                    <span className="font-semibold text-[#1C1C1E]">{averageRating.toFixed(1)}</span>
+                  </>
+                ) : (
+                  <span className="text-[#1C1C1E]/30">No reviews</span>
+                )}
               </div>
             </div>
           </div>
@@ -144,9 +155,10 @@ export function LuxuryItemCard({
         </div>
       </div>
 
-      <DropDetailModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+      <ProductDetailsSheet
+        isOpen={isSheetOpen}
+        onClose={() => setIsSheetOpen(false)}
+        listingId={listingId}
         item={{ title, merchant, merchantId: storeId, originalPrice, surplusPrice, imageUrl, availableCount, hasReserved }}
         action={action}
       />

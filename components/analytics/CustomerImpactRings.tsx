@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { RadialBarChart, RadialBar, PolarAngleAxis } from "recharts";
 import {
   Card,
@@ -93,7 +92,7 @@ export function CustomerImpactRings({
                 <ChartTooltipContent
                   hideLabel
                   className="bg-white/95 backdrop-blur-lg border-[#1C1C1E]/10"
-                  formatter={(value, name, item) => {
+                  formatter={(name) => {
                     const dataItem = data.find((d) => d.name === name);
                     if (!dataItem) return null;
 

@@ -8,9 +8,10 @@ import { FilterDropdown } from "@/components/shared/FilterDropdown";
 
 interface DashboardDropsProps {
   listings: ActiveListing[];
+  ratings?: Record<string, { average: number; count: number }>;
 }
 
-export function DashboardDrops({ listings }: DashboardDropsProps) {
+export function DashboardDrops({ listings, ratings = {} }: DashboardDropsProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [stockFilter, setStockFilter] = useState("ALL");
   const [sortFilter, setSortFilter] = useState("NEWEST");
@@ -37,7 +38,7 @@ export function DashboardDrops({ listings }: DashboardDropsProps) {
     if (sortFilter === "PRICE_HIGH_LOW") return list.sort((a, b) => b.reservedPrice - a.reservedPrice);
     if (sortFilter === "STOCK_LOW") return list.sort((a, b) => a.quantityAvailable - b.quantityAvailable);
     // NEWEST by default
-    return list.sort((a, b) => new Date(b.createdAt || Date.now()).getTime() - new Date(a.createdAt || Date.now()).getTime());
+    return list.sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime());
   }, [listings, sortFilter]);
 
   const {
@@ -45,7 +46,6 @@ export function DashboardDrops({ listings }: DashboardDropsProps) {
     paginatedItems: paginatedListings,
     currentPage,
     totalPages,
-    startIndex,
     setCurrentPage,
     showingFrom,
     showingTo,
@@ -121,6 +121,7 @@ export function DashboardDrops({ listings }: DashboardDropsProps) {
             {paginatedListings.map((listing, index) => (
               <LuxuryItemCard
                 key={listing.id}
+                listingId={listing.id}
                 title={listing.title}
                 merchant={listing.storeName}
                 storeId={listing.storeId}
@@ -129,6 +130,8 @@ export function DashboardDrops({ listings }: DashboardDropsProps) {
                 imageUrl={listing.imageUrl}
                 availableCount={listing.quantityAvailable}
                 index={index}
+                averageRating={ratings[listing.id]?.average}
+                reviewCount={ratings[listing.id]?.count}
               />
             ))}
           </div>

@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useTransition, useState, useCallback, useOptimistic } from "react";
-import { approveMerchantApplication, rejectMerchantApplication } from "@/app/actions/admin";
-import { usePagination } from "@/hooks/usePagination";
-import { FilterDropdown } from "@/components/shared/FilterDropdown";
-import {
+import        { approveMerchantApplication, rejectMerchantApplication } from "@/app/actions/admin";
+import        { usePagination } from "@/hooks/usePagination";
+import        { FilterDropdown } from "@/components/shared/FilterDropdown";
+import        {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -60,7 +60,6 @@ export function PendingApplicationsTable({ applications }: { applications: Merch
     paginatedItems: paginatedApps,
     currentPage,
     totalPages,
-    startIndex,
     setCurrentPage,
     showingFrom,
     showingTo,

@@ -11,7 +11,7 @@ export interface Notification {
   id: string;
   userId: string | null;
   message: string;
-  type: "NEW_DROP" | "RESERVATION_MADE" | "RESERVATION_CLAIMED" | "RESERVATION_CANCELLED" | "MERCHANT_APPROVED" | "MERCHANT_REJECTED";
+  type: "NEW_DROP" | "RESERVATION_MADE" | "RESERVATION_CLAIMED" | "RESERVATION_CANCELLED" | "MERCHANT_APPROVED" | "MERCHANT_REJECTED" | "NEW_FOLLOWER";
   isRead: boolean;
   link: string | null;
   createdAt: Date;

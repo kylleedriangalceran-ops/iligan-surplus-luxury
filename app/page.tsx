@@ -1,5 +1,6 @@
 import React, { Suspense } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { AnimatedButton } from "@/components/shared/AnimatedButton";
 import { LuxuryItemCard } from "@/components/shared/LuxuryItemCard";
 import { SkeletonCard } from "@/components/shared/Skeletons";
@@ -62,6 +63,7 @@ function CardGrid() {
         return (
           <LuxuryItemCard
             key={item.title}
+            listingId=""
             title={item.title}
             merchant={item.merchant}
             storeId=""
@@ -94,11 +96,11 @@ export default async function Home() {
       {/* Hero Section */}
       <section className="flex flex-col items-center text-center justify-center min-h-[65vh] max-w-4xl mx-auto space-y-8 px-6 lg:px-12">
         <div className="space-y-4">
-          <p className="uppercase tracking-[0.3em] text-xs font-semibold text-muted-foreground">
+          <p className="uppercase tracking-[0.3em] text-[10px] sm:text-xs font-semibold text-muted-foreground">
             Iligan City • Exclusive Access
           </p>
-          <h1 className="text-5xl md:text-7xl font-semibold tracking-tighter text-foreground leading-[1.1]">
-            Curated Surplus, <br /> Reserved for You.
+          <h1 className="text-[2.5rem] leading-[1.05] sm:text-5xl md:text-6xl lg:text-7xl font-semibold tracking-tighter text-foreground">
+            Curated Surplus, <br className="hidden sm:block" /> Reserved for You.
           </h1>
         </div>
         
@@ -189,12 +191,21 @@ export default async function Home() {
       <footer className="w-full bg-foreground text-background py-16 mt-20">
         <div className="container mx-auto px-6 flex flex-col md:flex-row justify-between items-start gap-12">
           <div>
-            <div className="font-sans text-xl font-medium tracking-tight mb-4">RESERVE.</div>
+            <div className="mb-4">
+              <Image 
+                src="/SurePlus+.png" 
+                alt="SurePlus+" 
+                width={120} 
+                height={32} 
+                style={{ width: "auto", height: "auto" }}
+                className="object-contain invert dark:invert-0" 
+              />
+            </div>
             <p className="text-sm font-light text-background/60 max-w-xs">
               Redefining surplus rescue in Iligan City with curated excess from top-tier culinary artists.
             </p>
           </div>
-          <div className="flex gap-16 text-sm">
+          <div className="flex gap-8 md:gap-16 text-sm">
             <div className="flex flex-col gap-4">
               <span className="uppercase tracking-widest text-xs font-semibold text-background/40">Explore</span>
               <Link href="/feed" className="hover:text-background/80 transition-colors">Drops</Link>

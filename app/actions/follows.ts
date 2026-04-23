@@ -3,6 +3,8 @@
 import { auth } from "@/lib/auth";
 import { followStore, unfollowStore, checkIsFollowing, getUserFollowedStores } from "@/lib/repositories/followRepository";
 import { revalidatePath } from "next/cache";
+import { query } from "@/lib/db";
+import { createNotification } from "@/lib/repositories/notificationRepository";
 
 export async function toggleStoreFollow(storeId: string, isCurrentlyFollowing: boolean) {
   const session = await auth();
@@ -10,18 +12,38 @@ export async function toggleStoreFollow(storeId: string, isCurrentlyFollowing: b
     return { error: "You must be logged in to follow stores." };
   }
 
-  // Double check the internal state to avoid race condition blindly inserting
-  // Or just rely on the UI intent. Let's rely on UI intent.
+  const followerName = session.user.name ?? "Someone";
+
   try {
     if (isCurrentlyFollowing) {
       await unfollowStore(session.user.id, storeId);
     } else {
       await followStore(session.user.id, storeId);
+
+      // Notify the merchant in real-time
+      try {
+        const res = await query(
+          `SELECT s.merchant_id, s.name AS store_name FROM stores s WHERE s.id = $1 LIMIT 1`,
+          [storeId]
+        );
+        if (res.rows.length > 0) {
+          const { merchant_id, store_name } = res.rows[0];
+          await createNotification(
+            merchant_id,
+            `@${followerName} followed your store`,
+            "NEW_FOLLOWER",
+            `/dashboard`
+          );
+        }
+      } catch (notifErr) {
+        // Non-fatal — don't block the follow action
+        console.error("Follow notification error:", notifErr);
+      }
     }
-    
+
     // Revalidate paths where feed/cards might be rendered
     revalidatePath("/feed");
-    revalidatePath(`/store/${storeId}`); // If such a route exists
+    revalidatePath(`/store/${storeId}`);
     return { success: true, isFollowing: !isCurrentlyFollowing };
   } catch (error) {
     console.error("toggleStoreFollow Error:", error);

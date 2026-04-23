@@ -1,9 +1,9 @@
-import { Pool, QueryResultRow } from 'pg';
+import { Pool, QueryResultRow } from "pg";
 
 if (!process.env.DATABASE_URL) {
   // If not using Neon, standard local PostgreSQL looks like:
   // postgresql://postgres:password@localhost:5432/iligan_surplus
-  console.warn('DATABASE_URL is not set. Database connections will fail.');
+  console.warn("DATABASE_URL is not set. Database connections will fail.");
 }
 
 const pool = new Pool({
@@ -18,7 +18,7 @@ const pool = new Pool({
  */
 export async function query<T extends QueryResultRow = QueryResultRow>(
   text: string,
-  params?: (string | number | boolean | null)[]
+  params?: unknown[],
 ) {
   const res = await pool.query<T>(text, params);
   return res;

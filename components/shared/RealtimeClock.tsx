@@ -12,7 +12,6 @@ export function RealtimeClock({ className }: { className?: string }) {
     setMounted(true);
   }, []);
 
-  // Format e.g., APRIL 08, 2026 | 14:32:01
   const dateStr = time
     .toLocaleDateString("en-US", {
       month: "long",

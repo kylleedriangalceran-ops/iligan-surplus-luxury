@@ -3,8 +3,6 @@
 import React, { useState, useEffect } from "react";
 import { getIsFollowing, toggleStoreFollow } from "@/app/actions/follows";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
-
 interface FollowStoreButtonProps {
   storeId: string;
 }

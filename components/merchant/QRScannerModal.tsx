@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Html5QrcodeScanner } from "html5-qrcode";
 import { verifyPickup } from "@/app/actions/merchant";
@@ -61,7 +61,7 @@ export function QRScannerModal({ isOpen, onClose }: QRScannerModalProps) {
                   setIsVerifying(false);
                 }, 1000);
               }
-            } catch (err) {
+            } catch {
               toast.dismiss();
               toast.error("Failed to communicate with server.");
               scanner?.resume();
@@ -178,17 +178,17 @@ export function QRScannerModal({ isOpen, onClose }: QRScannerModalProps) {
               #qr-reader button {
                 background: #1C1C1E !important;
                 color: #FAF9F6 !important;
-                padding: 14px 24px !important;
+                padding: 10px 20px !important;
                 border: none !important;
-                border-radius: 8px !important;
-                font-size: 11px !important;
+                border-radius: 10px !important;
+                font-size: 10px !important;
                 font-weight: 600 !important;
                 text-transform: uppercase !important;
                 letter-spacing: 0.1em !important;
                 margin-top: 10px !important;
                 cursor: pointer !important;
                 width: 100% !important;
-                max-width: 220px !important;
+                max-width: 180px !important;
                 display: block !important;
                 transition: opacity 0.2s !important;
                 position: relative !important;

@@ -1,25 +1,12 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
 import { ActionButton } from "@/components/shared/ActionButton";
 
-// Dynamically import map to avoid SSR issues
-const MapContainer = dynamic(
-  () => import("react-leaflet").then((mod) => mod.MapContainer),
-  { ssr: false }
-);
-const TileLayer = dynamic(
-  () => import("react-leaflet").then((mod) => mod.TileLayer),
-  { ssr: false }
-);
-const Marker = dynamic(
-  () => import("react-leaflet").then((mod) => mod.Marker),
-  { ssr: false }
-);
-const useMapEvents = dynamic(
-  () => import("react-leaflet").then((mod) => mod.useMapEvents),
+const MapPicker = dynamic(
+  () => import("./MapPicker"),
   { ssr: false }
 );
 
@@ -38,22 +25,7 @@ export function SetLocationPanel({ currentLat, currentLng, storeName, onSave }: 
   const [position, setPosition] = useState<[number, number]>(
     currentLat && currentLng ? [currentLat, currentLng] : ILIGAN_CENTER
   );
-  const [L, setL] = useState<any>(null);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      import("leaflet").then((leaflet) => {
-        setL(leaflet.default);
-        // Fix for default marker icon
-        delete (leaflet.default.Icon.Default.prototype as any)._getIconUrl;
-        leaflet.default.Icon.Default.mergeOptions({
-          iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
-          iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
-          shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-        });
-      });
-    }
-  }, []);
+  // Leaflet is handled completely inside MapPicker now
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -69,21 +41,6 @@ export function SetLocationPanel({ currentLat, currentLng, storeName, onSave }: 
     }
   };
 
-  function LocationMarker() {
-    useMapEvents({
-      click(e) {
-        setPosition([e.latlng.lat, e.latlng.lng]);
-      },
-    });
-
-    return position ? <Marker position={position} draggable={true} eventHandlers={{
-      dragend: (e) => {
-        const marker = e.target;
-        const pos = marker.getLatLng();
-        setPosition([pos.lat, pos.lng]);
-      }
-    }} /> : null;
-  }
 
   const hasLocation = currentLat && currentLng;
 
@@ -100,7 +57,7 @@ export function SetLocationPanel({ currentLat, currentLng, storeName, onSave }: 
           </svg>
         }
       >
-        {hasLocation ? "Location" : "Set Location"}
+        {hasLocation ? "Edit Location" : "Set Location"}
       </ActionButton>
 
       {/* Slide-out Panel */}
@@ -145,20 +102,7 @@ export function SetLocationPanel({ currentLat, currentLng, storeName, onSave }: 
 
                 {/* Map Container */}
                 <div className="flex-1 border border-[#1C1C1E]/10 rounded-md overflow-hidden mb-6" style={{ minHeight: "400px" }}>
-                  {L && (
-                    <MapContainer
-                      center={position}
-                      zoom={15}
-                      style={{ width: "100%", height: "100%" }}
-                      scrollWheelZoom={true}
-                    >
-                      <TileLayer
-                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                      />
-                      <LocationMarker />
-                    </MapContainer>
-                  )}
+                  <MapPicker position={position} setPosition={setPosition} />
                 </div>
 
                 {/* Coordinates Display */}

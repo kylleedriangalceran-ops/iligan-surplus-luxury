@@ -56,7 +56,7 @@ export function Toast({ message, type, isVisible, onClose, duration = 3000 }: To
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -20, scale: 0.95 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
-          className="fixed top-6 right-6 z-[9999] max-w-md"
+          className="fixed top-6 right-6 z-9999 max-w-md"
         >
           <div className={`flex items-center gap-4 px-6 py-4 rounded-md border-2 shadow-xl backdrop-blur-sm ${styles[type]}`}>
             <div className="shrink-0">{icons[type]}</div>

@@ -1,4 +1,3 @@
-import React from "react";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import {
@@ -12,6 +11,11 @@ import { PendingApplicationsTable } from "@/components/admin/PendingApplications
 import { LiveDropsTable } from "@/components/admin/LiveDropsTable";
 import { AdminUserManagement } from "@/components/admin/AdminUserManagement";
 import { GlobalSettingsPanel } from "@/components/admin/GlobalSettingsPanel";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Admin",
+};
 
 export const dynamic = "force-dynamic";
 
@@ -51,7 +55,7 @@ export default async function AdminPage() {
               </svg>
             </div>
             <div>
-              <h1 className="text-3xl md:text-4xl font-light tracking-[0.1em] uppercase">
+              <h1 className="text-3xl md:text-4xl font-light tracking-widest uppercase">
                 Admin Console
               </h1>
             </div>

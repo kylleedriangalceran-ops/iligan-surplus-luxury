@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid } from "recharts";
 import {
   Card,
@@ -48,12 +47,6 @@ export function PlatformGrowthArea({
       label: "Transactions",
       color: "rgba(28, 28, 30, 0.8)",
     },
-  };
-
-  const metricLabels = {
-    users: "Total Users",
-    merchants: "Total Merchants",
-    transactions: "Total Transactions",
   };
 
   // Calculate growth percentage

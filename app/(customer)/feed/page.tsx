@@ -6,6 +6,7 @@ import { RealtimeClock } from '@/components/shared/RealtimeClock';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { auth } from '@/lib/auth';
 import { getReservationsByCustomerId } from '@/lib/repositories/reservationRepository';
+import { getBatchAggregatedRatings } from '@/lib/repositories/reviewRepository';
 
 export const revalidate = 60;
 
@@ -20,19 +21,37 @@ export default async function CustomerFeedPage() {
     reservations.forEach(r => reservedListingIds.add(r.listingId));
   }
 
+  // Batch fetch ratings for all visible listings
+  const listingIds = listings.map((l) => l.id);
+  const ratingsMap = await getBatchAggregatedRatings(listingIds);
+
   return (
     <div className="min-h-screen bg-[#FAF9F6] text-[#1C1C1E] py-16 px-6 md:px-12 lg:px-24">
       <div className="max-w-7xl mx-auto">
         <header className="mb-12 border-b border-[#1C1C1E]/10 pb-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             {/* Breadcrumbs */}
-            <Breadcrumbs 
-              items={[
-                { label: 'Reserve', href: '/' },
-                { label: 'Feed', href: '/feed' },
-                { label: 'Curated Drops' }
-              ]} 
-            />
+            {(() => {
+              let rootLabel = 'Reserve';
+              let rootHref = '/';
+              
+              if (session?.user?.role === 'ADMIN') {
+                rootLabel = 'Admin';
+                rootHref = '/admin';
+              } else if (session?.user?.role === 'MERCHANT') {
+                rootLabel = 'Dashboard';
+                rootHref = '/dashboard';
+              }
+
+              return (
+                <Breadcrumbs 
+                  items={[
+                    { label: rootLabel, href: rootHref },
+                    { label: 'Curated Drops' }
+                  ]} 
+                />
+              );
+            })()}
             {/* Date & Time positioned top-right for desktop */}
             <RealtimeClock />
           </div>
@@ -55,12 +74,13 @@ export default async function CustomerFeedPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {listings.map((listing, index) => {
-              // Bind the listing ID to the server action to pass it securely to the UI
               const reserveAction = reserveSurplusItem.bind(null, listing.id);
+              const rating = ratingsMap.get(listing.id);
               
               return (
                 <LuxuryItemCard
                   key={listing.id}
+                  listingId={listing.id}
                   title={listing.title}
                   merchant={listing.storeName}
                   storeId={listing.storeId}
@@ -71,6 +91,8 @@ export default async function CustomerFeedPage() {
                   action={reserveAction}
                   index={index}
                   hasReserved={reservedListingIds.has(listing.id)}
+                  averageRating={rating?.average}
+                  reviewCount={rating?.count}
                 />
               );
             })}

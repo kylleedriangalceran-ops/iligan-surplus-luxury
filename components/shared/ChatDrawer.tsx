@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
@@ -119,7 +119,7 @@ export function ChatDrawer({ isOpen, onClose, initialRecipientId, initialRecipie
         pusher.unsubscribe(channelName);
       }
     };
-  }, [isOpen, view, activeRecipientId]);
+  }, [isOpen, view, activeRecipientId, currentUserId]);
 
   // Scroll to bottom on new messages
   useEffect(() => {

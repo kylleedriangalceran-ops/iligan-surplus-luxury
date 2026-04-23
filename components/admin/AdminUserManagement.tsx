@@ -63,7 +63,6 @@ export function AdminUserManagement({
     paginatedItems: paginatedUsers,
     currentPage,
     totalPages,
-    startIndex,
     setCurrentPage,
     showingFrom,
     showingTo,

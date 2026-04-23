@@ -1,5 +1,8 @@
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 require('dotenv').config({ path: '.env' });
+// eslint-disable-next-line @typescript-eslint/no-require-imports 
 const { Pool } = require('pg');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const bcrypt = require('bcryptjs');
 
 const pool = new Pool({
